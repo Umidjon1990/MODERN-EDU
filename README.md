@@ -8,9 +8,35 @@ Har bir sinfxona xuddi maxfiy Telegram guruhi kabi ishlaydi, lekin ustiga vazifa
 
 ---
 
+## Ishga tushirish va sinab ko'rish
+
+```bash
+pnpm install          # bog'liqliklarni o'rnatish
+pnpm dev              # barcha ilovalarni dev rejimida ishga tushirish
+# yoki faqat veb:
+pnpm --filter @modern-edu/web dev   # → http://localhost:3000
+```
+
+Brauzerda **http://localhost:3000** ni oching. Sinab ko'rish uchun namuna hisoblar:
+
+| Rol           | Login     | Parol        |
+| ------------- | --------- | ------------ |
+| 👩‍🏫 O'qituvchi | `teacher` | `teacher123` |
+| 🧑‍🎓 O'quvchi   | `aziz`    | `aziz123`    |
+| 🧑‍🎓 O'quvchi   | `malika`  | `malika123`  |
+
+Sinab ko'rish mumkin: kirish/chiqish, sinfxona chat (xabar yuborish, reaksiya, javob, qadalgan xabarlar, e'lon banneri), yorug'/qorong'i rejim, responsiv layout. **Eslatma:** hozircha ma'lumotlar lokal (preview); haqiqiy backend (Postgres + realtime WebSocket) 1–4-bosqichlarda ulanadi.
+
+### Tekshiruv buyruqlari
+
+```bash
+pnpm verify           # lint · typecheck · test · build (butun monorepo)
+pnpm format           # Prettier bilan formatlash
+```
+
 ## Ushbu repozitoriya
 
-Bu **arxitektura va dizayn bosqichi**. Hozircha hech qanday dastur kodi yozilmagan — bu ataylab shunday. Quyidagi hujjatlar tasdiqlanishi kutilayotgan blueprint (loyiha rejasi) bo'lib, har qanday amalga oshirish (implementatsiya) boshlanishidan oldin o'qilishi shart.
+Bu **arxitektura, dizayn va bosqichma-bosqich amalga oshirish** repozitoriyasi. Quyidagi hujjatlar blueprint (loyiha rejasi) bo'lib, har qanday yangi modul boshlanishidan oldin o'qilishi shart. Implementatsiya `docs/05` rejasidagi bosqichlar bo'yicha olib boriladi.
 
 | Hujjat                                                                       | Maqsadi                                                                                                                                                  |
 | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -31,4 +57,4 @@ Bu **arxitektura va dizayn bosqichi**. Hozircha hech qanday dastur kodi yozilmag
 - **AI:** boshqariladigan **Claude** modellari provayder-abstraksiya qatlami ortida (o'z serveringda joylashtirish imkoniga tayyor) — repetitorlik, o'qituvchiga yordam va moderatsiya uchun.
 - **Infratuzilma:** Kubernetes'da konteynerlar, infrastruktura-kod sifatida (IaC), blue/green deploy.
 
-> **Holat:** Tasdiq kutilmoqda. Blueprint imzolanmaguncha hech qanday implementatsiya yo'q.
+> **Holat:** Blueprint tasdiqlandi. Implementatsiya boshlandi — 0.1 (monorepo + CI) ✅ va ishlaydigan veb-ilova preview slice'i (kirish → sinfxona → chat) ✅. Keyingisi: haqiqiy backend (1–2-bosqichlar) va realtime (4-bosqich).
