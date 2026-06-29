@@ -26,7 +26,8 @@
     "onlyBuiltDependencies": [
       "esbuild",
       "sharp",
-      "unrs-resolver"
+      "unrs-resolver",
+      "@electric-sql/pglite"
     ]
   }
 }
