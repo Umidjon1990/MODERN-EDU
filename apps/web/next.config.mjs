@@ -1,7 +1,8 @@
 // GitHub Pages uchun statik eksport. Pages build'da GITHUB_PAGES=true beriladi,
 // shunda repo nomi basePath sifatida qo'shiladi (https://<user>.github.io/modern-edu/).
 const isPages = process.env.GITHUB_PAGES === 'true';
-const repo = 'modern-edu';
+// GitHub Pages URL yo'li repo nomini aynan (katta-kichik harf bilan) saqlaydi.
+const repo = 'MODERN-EDU';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
