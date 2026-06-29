@@ -1,16 +1,37 @@
 'use client';
 
-import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
-import { loginAction, type LoginState } from '@/lib/actions';
-
-const initial: LoginState = {};
+import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { findUserByCredentials } from '@/lib/demo-data';
+import { setSession } from '@/lib/client-session';
 
 export function LoginForm() {
-  const [state, formAction] = useActionState(loginAction, initial);
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    const form = new FormData(e.currentTarget);
+    const username = String(form.get('username') ?? '');
+    const password = String(form.get('password') ?? '');
+
+    if (!username || !password) {
+      setError('Login va parolni kiriting.');
+      return;
+    }
+    const user = findUserByCredentials(username, password);
+    if (!user) {
+      setError('Login yoki parol noto‘g‘ri.');
+      return;
+    }
+    setSession(user.id);
+    startTransition(() => router.push('/classroom'));
+  }
 
   return (
-    <form action={formAction} className="grid gap-4">
+    <form onSubmit={onSubmit} className="grid gap-4">
       <Field label="Login">
         <input
           name="username"
@@ -31,7 +52,7 @@ export function LoginForm() {
         />
       </Field>
 
-      {state.error && (
+      {error && (
         <p
           role="alert"
           className="animate-fade-rise rounded-[var(--radius-sm)] px-3 py-2 text-sm"
@@ -40,11 +61,24 @@ export function LoginForm() {
             color: 'var(--danger)',
           }}
         >
-          {state.error}
+          {error}
         </p>
       )}
 
-      <SubmitButton />
+      <button
+        type="submit"
+        disabled={pending}
+        className="ring-brand mt-1 inline-flex h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] font-semibold shadow-soft-md transition active:scale-[.99] disabled:opacity-70"
+        style={{ background: 'var(--primary)', color: 'var(--primary-fg)' }}
+      >
+        {pending ? (
+          <>
+            <Spinner /> Kirilmoqda…
+          </>
+        ) : (
+          'Kirish'
+        )}
+      </button>
 
       <style>{`
         .input {
@@ -70,26 +104,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="text-muted text-sm font-medium">{label}</span>
       {children}
     </label>
-  );
-}
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="ring-brand mt-1 inline-flex h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] font-semibold shadow-soft-md transition active:scale-[.99] disabled:opacity-70"
-      style={{ background: 'var(--primary)', color: 'var(--primary-fg)' }}
-    >
-      {pending ? (
-        <>
-          <Spinner /> Kirilmoqda…
-        </>
-      ) : (
-        'Kirish'
-      )}
-    </button>
   );
 }
 

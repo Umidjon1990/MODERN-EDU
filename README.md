@@ -34,6 +34,16 @@ pnpm verify           # lint · typecheck · test · build (butun monorepo)
 pnpm format           # Prettier bilan formatlash
 ```
 
+### GitHub Pages'da sinab ko'rish (bepul, ommaviy URL)
+
+Ilova statik sayt sifatida ham eksport qilinadi va GitHub Pages'ga avtomatik deploy bo'ladi:
+
+1. GitHub repo → **Settings → Pages → Build and deployment → Source: «GitHub Actions»** ni tanlang (bir marta).
+2. `claude/modern-edu-architecture-pjhg7s` (yoki `main`) branchga push bo'lganda **«Deploy to GitHub Pages»** workflow ishga tushadi.
+3. Manzil: **https://umidjon1990.github.io/modern-edu/**
+
+> Agar deploy branch siyosati tufayli to'xtasa, branchni `main`ga merge qiling. Statik versiyada login client-side (localStorage) — faqat demo; haqiqiy server-autentifikatsiya 1–2-bosqichlarda keladi.
+
 ## Ushbu repozitoriya
 
 Bu **arxitektura, dizayn va bosqichma-bosqich amalga oshirish** repozitoriyasi. Quyidagi hujjatlar blueprint (loyiha rejasi) bo'lib, har qanday yangi modul boshlanishidan oldin o'qilishi shart. Implementatsiya `docs/05` rejasidagi bosqichlar bo'yicha olib boriladi.

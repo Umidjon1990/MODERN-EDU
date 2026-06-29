@@ -1,7 +1,13 @@
-import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/session';
+'use client';
 
-export default async function Home() {
-  const user = await getCurrentUser();
-  redirect(user ? '/classroom' : '/login');
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { getSession } from '@/lib/client-session';
+
+export default function Home() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace(getSession() ? '/classroom' : '/login');
+  }, [router]);
+  return null;
 }

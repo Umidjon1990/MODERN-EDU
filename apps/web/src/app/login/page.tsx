@@ -1,13 +1,8 @@
-import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/session';
 import { LoginForm } from './login-form';
 import { BrandMark } from '@/components/brand';
 import { ThemeToggle } from '@/components/theme-toggle';
 
-export default async function LoginPage() {
-  const user = await getCurrentUser();
-  if (user) redirect('/classroom');
-
+export default function LoginPage() {
   return (
     <main className="bg-app relative min-h-dvh">
       <div className="absolute right-5 top-5">

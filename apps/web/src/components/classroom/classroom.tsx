@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BrandMark, Avatar } from '@/components/brand';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { logoutAction } from '@/lib/actions';
 
 export type ClientUser = { id: string; name: string; color: string; role: string };
 export type ClientMember = ClientUser & { online: boolean };
@@ -26,11 +25,13 @@ export function Classroom({
   klass,
   members,
   initialMessages,
+  onLogout,
 }: {
   currentUser: ClientUser;
   klass: { name: string; subject: string };
   members: ClientMember[];
   initialMessages: ClientMessage[];
+  onLogout: () => void;
 }) {
   const [messages, setMessages] = useState<ClientMessage[]>(initialMessages);
   const [replyTo, setReplyTo] = useState<ClientMessage | null>(null);
@@ -193,7 +194,7 @@ export function Classroom({
         </nav>
 
         <div className="mt-auto">
-          <UserCard user={currentUser} />
+          <UserCard user={currentUser} onLogout={onLogout} />
         </div>
       </aside>
 
@@ -760,7 +761,7 @@ function NavItem({
   );
 }
 
-function UserCard({ user }: { user: ClientUser }) {
+function UserCard({ user, onLogout }: { user: ClientUser; onLogout: () => void }) {
   return (
     <div
       className="flex items-center gap-2.5 rounded-[var(--radius-md)] border p-2"
@@ -771,15 +772,14 @@ function UserCard({ user }: { user: ClientUser }) {
         <div className="truncate text-sm font-semibold">{user.name}</div>
         <div className="text-muted text-xs">{roleLabel(user.role)}</div>
       </div>
-      <form action={logoutAction}>
-        <button
-          type="submit"
-          aria-label="Chiqish"
-          className="ring-brand grid h-8 w-8 place-items-center rounded-[var(--radius-sm)] text-muted transition hover:text-[var(--danger)]"
-        >
-          <LogoutIcon />
-        </button>
-      </form>
+      <button
+        type="button"
+        onClick={onLogout}
+        aria-label="Chiqish"
+        className="ring-brand grid h-8 w-8 place-items-center rounded-[var(--radius-sm)] text-muted transition hover:text-[var(--danger)]"
+      >
+        <LogoutIcon />
+      </button>
     </div>
   );
 }
