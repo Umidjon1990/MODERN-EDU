@@ -1,0 +1,5 @@
+{
+  "//": "Root tsconfig — faqat muharrir/IDE qulayligi uchun. Har bir paket o'z tsconfig.json fayliga ega.",
+  "files": [],
+  "references": [{ "path": "packages/contracts" }]
+}

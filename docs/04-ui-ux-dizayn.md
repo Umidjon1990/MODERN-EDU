@@ -1,6 +1,6 @@
 # 04 — UI/UX dizayn
 
-> Dizayn mezoni: *Ushbu ekran 2026-yilda Telegram, Discord, Notion, Slack va Linear bilan raqobatlasha oladimi?* Agar yo'q bo'lsa — qurishdan oldin qayta loyihalang. Portfolio darajasidagi sifat, ishlab chiqarishga tayyor.
+> Dizayn mezoni: _Ushbu ekran 2026-yilda Telegram, Discord, Notion, Slack va Linear bilan raqobatlasha oladimi?_ Agar yo'q bo'lsa — qurishdan oldin qayta loyihalang. Portfolio darajasidagi sifat, ishlab chiqarishga tayyor.
 
 Modern Edu **haqiqiy raqamli sinfxonaga** kirish hissini berishi kerak — sokin, premium, jonli — korporativ LMS paneli emas. Estetika **Telegram'ning chat qulayligi**, **Notion'ning tartibli osoyishtaligi**, **Linear'ning aniqligi**, **Discord'ning jonliligi** va **Apple'ning sayqalini** o'z iliq, ta'limga yo'naltirilgan o'ziga xosligi bilan birlashtiradi.
 
@@ -19,27 +19,32 @@ Modern Edu **haqiqiy raqamli sinfxonaga** kirish hissini berishi kerak — sokin
 ## 2. Dizayn tokenlari (poydevor)
 
 ### Rang
+
 - **Tizim:** komponentlarda xom hex emas, semantik tokenlar. `--bg`, `--surface`, `--surface-elevated`, `--text`, `--text-muted`, `--border`, `--primary`, `--primary-fg`, `--accent`, `--success`, `--warning`, `--danger`, `--info`.
 - **Brend asosiy:** ishonchli indigo/binafsha (ta'lim + ishonch + premium), masalan, 50–950 darajalar. **Aksent:** ajratish va bayram uchun iliq ikkilamchi (amber/teal).
 - **Yorug' va Qorong'i — teng huquqli** — qorong'i rejim avto-invert emas, loyihalashtiriladi. Qorong'i qatlamli neytral fonlar (`#0B0B0F`-ga yaqin) ishlatadi, ko'tarilgan yuzalar yorug'lashadi, sof oq matn sof qora ustida emas (yaltirashni kamaytiradi).
 - **Kontrast:** barcha matn **WCAG AA (4.5:1)** ga javob beradi; interaktiv/katta matn imkon qadar AAA ga intiladi.
 
 ### Tipografiya
+
 - **UI/asosiy:** har o'lchamda aniqlik uchun zamonaviy geometrik-gumanistik sans (masalan, Inter / Geist).
 - **Sarlavhalar:** iliqlik uchun ozgina xarakterli hamroh; ixcham, ishonchli tracking.
 - **Tip shkalasi:** modulli (masalan, 12 / 14 / 16 / 20 / 24 / 32 / 40), saxiy qator balandligi (1.5 asosiy), o'qish qulayligi uchun ~65 belgi maksimal qator uzunligi.
 - **Raqamlar:** gradebook/hisoblagichlar uchun tabular raqamlar.
 
 ### Bo'sh joy, radius, balandlik
+
 - **4px asosiy panjara**; bo'sh joy shkalasi 4→8→12→16→24→32→48→64.
 - **Radius:** `sm 8` (inputlar/chiplar), `md 12` (kartalar/pufakchalar), `lg 16` (modal/panellar), `xl 24` (hero yuzalar), `full` (avatarlar/FAB).
 - **Soyalar:** yumshoq, ko'p qatlamli, past shaffoflik — tinch kartalar uchun `shadow-sm`, hover/aktivda `shadow-md`, overlay uchun `shadow-lg`. Qorong'i rejim og'ir soyalar o'rniga chegaralar + nozik porlashga tayanadi.
 
 ### Shisha va gradient (kam ishlatiladi)
+
 - **Glassmorphism** faqat suzuvchi/overlay bezaklarda (yuqori panellar, buyruq paletkasi, scroll'da suzuvchi kompozer) — orqa fon blur + shaffoflik, hech qachon zich o'qish kontentida emas.
 - **Gradientlar** bo'sh holat illyustratsiyalari, onboarding, bayram lahzalari va brend belgisi uchun — nozik, baland emas.
 
 ### Ikonografiya va illyustratsiya
+
 - **Ikonkalar:** bitta izchil to'plam (Lucide/Phosphor), 1.5–2px chiziq, optik tekislangan, panjarada o'lchamlangan.
 - **Illyustratsiyalar:** bo'sh holatlar, onboarding va yutuqlar uchun kichik maxsus to'plam — do'stona, brendga mos, yengil (SVG/Lottie).
 
@@ -63,20 +68,24 @@ Brekpointlar mobil ilova pariteti bilan tekislanadi, shu sababli React Native ek
 ## 4. Asosiy ekranlar
 
 ### 4.1 Onboarding va kirish
+
 - **Kirish:** yumshoq gradient maydonida bitta sokin, markazlashgan karta; login + parol; aniq xato holatlari; "birinchi kirish" oqimi o'quvchini do'stona, dalda beruvchi ohangda yangi parol o'rnatishga yo'naltiradi (kuch ko'rsatkichi bilan).
 - **Birinchi ishga tushirish (o'quvchi):** qisqa, chiroyli 2–3 qadamli kutib olish — uning o'qituvchisi kim, bu sinfxona nima, chat/vazifalar qanday ishlaydi — brendga mos illyustratsiyalar bilan. O'tkazib yuborilsa bo'ladi, hech qachon bezovta qilmaydi.
 - **O'qituvchi onboarding:** yo'naltirilgan "Birinchi sinfingizni yarating → o'quvchilar qo'shing → mana login varaqangiz" oqimi, qiymatga vaqtni kamaytiradi.
 
 ### 4.2 Sinfxona bosh sahifasi (yurak)
+
 O'quvchi uchun standart tushish joyi. **Hech qachon bo'sh ko'rinmaydi.** Chat ustida quyidagilarni ko'rsatadigan sokin, skanlanadigan layout:
+
 - **E'lon banneri** (agar faol o'qituvchi e'loni bo'lsa) — alohida, mayin, yopiladigan.
 - **Qadalganlar tasmasi** — gorizontal scrollanadigan qadalgan xabar kartalari.
-- **Tezkor nazar qatori** — *Kelgusi* (keyingi dars/muddat), *Topshiriladigan vazifalar*, *So'nggi muhokamalar*, *Tezkor harakatlar* (AI-repetitordan so'rash, ish topshirish, o'qituvchiga yozish).
+- **Tezkor nazar qatori** — _Kelgusi_ (keyingi dars/muddat), _Topshiriladigan vazifalar_, _So'nggi muhokamalar_, _Tezkor harakatlar_ (AI-repetitordan so'rash, ish topshirish, o'qituvchiga yozish).
 - **Jonli chat** pastda/markazda asosiy uzluksiz yuza sifatida.
 
 Bo'sh holatlar loyihalashtirilgan va iliq ("Hali vazifa yo'q — hammasi bajarilgan ✨"), hech qachon bo'sh emas.
 
 ### 4.3 Chat tajribasi (ajoyib bo'lishi shart)
+
 Telegram darajasidagi qulaylik — mezon. Tafsilotlar:
 
 - **Xabar pufakchalari:** yumaloq (`md`), o'z-va-boshqalar tekislash + rang bilan farqlanadi (qattiq emas), qulay padding, boshqalar uchun aniq jo'natuvchi nomi/avatari, bir jo'natuvchining ketma-ket xabarlari guruhlanadi (bitta avatar, zич joylashuv).
@@ -93,24 +102,28 @@ Telegram darajasidagi qulaylik — mezon. Tafsilotlar:
 - **Slow-mode / ovozsiz** — o'qituvchi moderatsiyani yoqsa, mayin ko'rsatiladi.
 
 ### 4.4 Vazifalar va testlar
+
 - **Vazifa kartasi/tafsiloti:** aniq sarlavha, muddat sanog'i, ilovalar, ko'rsatmalar; o'quvchi topshirish paneli (matn + fayl tashlash), avtosaqlash-qoralama va ishonchli "Topshirildi ✓" holati bilan; o'qituvchi baholash ko'rinishi inline fikr-mulohaza va ravon baho kiritish bilan.
 - **Testlar:** chalg'ituvchidan xoli "fokus rejimi" — bitta yoki sahifalangan savollar, sokin taymer, avtosaqlash, aniq jarayon; ball va har bir savol fikr-mulohazasi bilan natija ekrani (oshkor qilish siyosatini hisobga olib).
 - **Gradebook (o'qituvchi):** toza jadval, yopishqoq o'quvchi ustuni, rang-kodli holat, tez filtrlash; hech qachon og'ir korporativ panjara emas.
 
 ### 4.5 A'zolar va profillar
+
 - Avatarlar, rollar, onlayn holat bilan ro'yxat; yengil profil tortmalari; aniq tasdiq dialoglari ortida o'qituvchi moderatsiya harakatlari (ovozsiz, chiqarish).
 
 ### 4.6 AI-Repetitor
+
 - Alohida (lekin uyg'un) vizual o'ziga xoslikka ega chat-ko'rinishidagi maxsus panel — shunda o'quvchilar har doim repetitor bilan gaplashayotganini biladi, inson bilan emas. **Sinf materiallariga asoslanganini** ko'rsatadi (manbalar/iqtiboslar), javoblarni token-token oqimi bilan beradi va cheklangan paytda (masalan, faol baholanadigan test paytida) aniq ko'rsatadi.
 
 ### 4.7 Admin va o'qituvchi boshqaruvi
+
 - Sokin boshqaruv yuzalari (o'qituvchi/sinf/o'quvchi yaratish, login eksporti) — og'ir panel emas, mahsuldorlik ilovasi aniqligi (Linear kabi). O'quvchilarni ommaviy yaratish yoqimli, kam-ishqalanishli oqimga ega bo'lib, oxirida chop etiladigan/QR login hujjati bilan.
 
 ---
 
 ## 5. Animatsiya va mikro-ta'sirlar
 
-- **Tamoyillar:** animatsiya *holat va fazoviy munosabatlarni* aniqlaydi; UI fikr-mulohazasi uchun tez (150–250ms), fazoviy o'tishlar uchun biroz uzunroq (300–400ms); tabiiy his uchun **prujina** fizikasi; hammasi `prefers-reduced-motion`ni hurmat qiladi.
+- **Tamoyillar:** animatsiya _holat va fazoviy munosabatlarni_ aniqlaydi; UI fikr-mulohazasi uchun tez (150–250ms), fazoviy o'tishlar uchun biroz uzunroq (300–400ms); tabiiy his uchun **prujina** fizikasi; hammasi `prefers-reduced-motion`ni hurmat qiladi.
 - **Qayerda:** sahifa/marshrut o'tishlari, xabar yuborish/qabul qilish (nozik ko'tarilish + so'nish), reaksiya popi, optimistik holatlar joylashishi, tugma bosish chuqurligi, sheet/modal prujina-kirishi, ro'yxat qayta tartiblanishi, toast sirpanishlari, tab indikatori sirg'alishi.
 - **Yuklash:** yakuniy layoutga mos **skelet ekranlar** (asosiy kontentda hech qachon bo'sh-spinnerlar emas); shimmer nozik saqlanadi; harakatlar darhol his etilishi uchun optimistik UI (xabarlar darhol paydo bo'ladi, tasdiqда moslashadi).
 - **Yoqimli lahzalar:** birinchi topshiriq, testni tugatish yoki streakда mayin konfetti/nishon animatsiyasi — kam ishlatiladi, shunda maxsus bo'lib qoladi.

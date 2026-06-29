@@ -51,6 +51,7 @@ Ushbu hujjat Modern Edu uchun **1 mln+ foydalanuvchiga** qayta platformaga o'tma
 ## 2. Frontend
 
 ### 2.1 Veb — Next.js (App Router)
+
 - **Nega:** tez birinchi ko'rinish uchun SSR/streaming, kichik bundle uchun React Server Components, yetuk ekotizim, birinchi darajali TypeScript.
 - **Render:** ilova qobig'i + autentifikatsiyalangan panellar asosan mijoz tomonida interaktiv; statik marketing sahifalari statik generatsiya qilinadi. Sinfxona ma'lumotlari REST orqali, jonli yangilanishlar realtime soket orqali olinadi.
 - **Holat (state):**
@@ -61,10 +62,12 @@ Ushbu hujjat Modern Edu uchun **1 mln+ foydalanuvchiga** qayta platformaga o'tma
 - **Formalar/validatsiya:** React Hook Form + Zod (Zod sxemalari `packages/contracts` orqali backend bilan ulashiladi).
 
 ### 2.2 Mobil — React Native + Expo
+
 - **Nega native Kotlin/Swift o'rniga:** monorepo orqali biznes mantiq, tiplar, validatsiya va API/soket mijozlarining ~80%ini veb bilan ulashadi; bitta jamoa; paritetga eng tez yo'l. Expo OTA yangilanishlar, push bildirishnomalar va boshqariladigan buildlar beradi. Keyinroq Expo qila olmaydigan narsalar uchun native modullar qo'shilishi mumkin.
 - `packages/contracts`, `packages/sdk` (tipli API + soket mijoz) va domen mantig'ini veb bilan ulashadi. Faqat ko'rinish qatlami farq qiladi.
 
 ### 2.3 Umumiy monorepo
+
 ```
 /apps
   /web         (Next.js)
@@ -79,6 +82,7 @@ Ushbu hujjat Modern Edu uchun **1 mln+ foydalanuvchiga** qayta platformaga o'tma
   /config      (eslint, tsconfig, tailwind preset)
   /db          (Prisma/Drizzle sxema, migratsiyalar, seederlar)
 ```
+
 Asboblar: tez, keshlangan buildlar uchun **pnpm workspaces + Turborepo**.
 
 ---
@@ -86,18 +90,21 @@ Asboblar: tez, keshlangan buildlar uchun **pnpm workspaces + Turborepo**.
 ## 3. Backend (API)
 
 ### 3.1 NestJS modulli monolit
+
 - **Nega:** fikrli, dependency-injection asosidagi, tabiatan modulli — har bir domen o'z controller/service/repository'ga ega mustaqil modul. Bu **aynan** mikroservis chegarasi; hozir bitta jarayon sifatida deploy qilamiz, keyin ajratamiz.
 - **Modullar (bounded context'lar):**
   `auth`, `identity` (foydalanuvchilar/rollar), `org` (tenantlar), `class` (sinflar & a'zoliklar), `messaging` (chat/xabarlar/pinlar), `media` (yuklamalar), `assignments`, `assessments` (testlar), `gradebook`, `notifications`, `moderation`, `ai`, `audit`, `search`, `admin`.
 - **Ichki aloqa:** bugun jarayon ichidagi metod chaqiruvlari, lekin har bir modul toza servis interfeysini ochib beradi va **domen hodisalarini** (masalan, `MessagePosted`, `StudentCreated`, `SubmissionGraded`) ichki hodisa shinasiga (event bus) chiqaradi. Modulni alohida servisga ajratganimizda, event bus haqiqiy brokerga (NATS/Kafka) aylanadi — chaqiruvchi kodga o'zgartirishsiz.
 
 ### 3.2 API uslubi
+
 - **Asosiy:** versiyalangan **REST** (`/api/v1/...`), resurs-yo'naltirilgan, oldindan aytib bo'ladigan, mobil va uchinchi tomonlar uchun oson. Hamma joyda cursor asosidagi paginatsiya (masshtabda OFFSET yo'q).
 - **Shartnomalar:** koddan generatsiya qilingan OpenAPI; Zod/DTO tiplari `packages/contracts` orqali mijozlar bilan ulashiladi. Mijozlar tiplarni qo'lda yozmaydi.
 - **Realtime delta kanali:** jonli hodisalar uchun WebSocket (§5). REST haqiqat manbai bo'lib qoladi; soketlar deltalar + presence olib yuradi.
 - **GraphQL:** ataylab keyinga qoldirildi. REST + tipli SDK kamroq operatsion murakkablik bilan ehtiyojlarimizni qoplaydi; agar so'rov shakllash bilan og'riq paydo bo'lsa, keyinroq GraphQL/BFF gateway qo'shamiz.
 
 ### 3.3 Namunaviy API yuzasi (v1)
+
 ```
 POST   /api/v1/auth/login
 POST   /api/v1/auth/refresh
@@ -145,18 +152,21 @@ POST   /api/v1/ai/assist/*                   # o'qituvchiga yordam endpointlari
 ## 4. Autentifikatsiya va sessiya boshqaruvi
 
 ### 4.1 Model
+
 - **O'zini ro'yxatdan o'tkazish yo'q.** Yagona login-yaratuvchi endpointlar — admin→o'qituvchi va o'qituvchi→o'quvchi, ikkalasi ham ruxsatga ega va jurnaliga yoziladi.
 - **Kirish:** login + parol (o'quvchilarda ko'pincha email yo'q). Email o'qituvchi/admin uchun ixtiyoriy (tiklash + 2FA imkonini beradi).
 - **Parol saqlash:** **Argon2id** (xotira-og'ir) har bir foydalanuvchi uchun alohida tuz (salt) bilan; secrets manager'dan pepper.
 - **Birinchi kirishda majburiy almashtirish:** o'qituvchi bergan parollar `must_change` deb belgilanadi; o'quvchi yangi parol o'rnatmaguncha sessiya cheklangan.
 
 ### 4.2 Tokenlar
+
 - **Kirish tokeni (access):** qisqa umrli (~15 daq) JWT (imzolangan, `user_id`, `role`, `org_id` va `session_id` ni o'z ichiga oladi). Har bir so'rovda holatsiz tekshirish.
 - **Yangilash tokeni (refresh):** uzoq umrli, **shaffof bo'lmagan, aylanuvchi (rotating)**, server tomonida (hashlangan) saqlanadi va sessiya/qurilma qatoriga bog'langan. Aylanish + qayta ishlatishni aniqlash (qayta ishlatilgan refresh token butun sessiya oilasini bekor qiladi).
 - **Veb:** tokenlar `httpOnly`, `Secure`, `SameSite=Lax` cookie'larda (XSS'ga chidamli). **Mobil:** tokenlar xavfsiz xotirada (Keychain/Keystore).
 - **Realtime:** soket qo'l berishi qisqa umrli kirish tokeni (yoki API tomonidan chiqarilgan bir martalik soket bileti) bilan autentifikatsiya qilinadi, qayta ulanishda qayta tekshiriladi.
 
 ### 4.3 Loyihalashtirilgan qo'shimchalar (bosqichma-bosqich)
+
 - Imtiyozli hisoblar (Admin/O'qituvchi) uchun **2FA/TOTP**.
 - **Qurilma/sessiya boshqaruvi** interfeysi (sessiyalarni ko'rish & bekor qilish).
 - Brute force'ga **hisob qulflash + eksponensial kechikish**; CAPTCHA eskalatsiyasi.
@@ -167,20 +177,24 @@ POST   /api/v1/ai/assist/*                   # o'qituvchiga yordam endpointlari
 ## 5. Realtime arxitekturasi
 
 ### 5.1 Gateway
+
 - **Maxsus, gorizontal masshtablanadigan WebSocket servisi** (API'dan alohida deploy), `ws`/Socket.IO asosida. Alohida bo'lishi chat yuki so'rovlarni qayta ishlashni hech qachon "ochlikka" qoldirmasligini va har biri mustaqil masshtablanishini ta'minlaydi.
 - **Xonalar = sinfxonalar.** Ulanishda mijoz faqat o'z a'zoliklari ruxsat bergan xonalarga qo'shiladi (DB/kesh bilan tekshiriladi — a'zolik xavfsizlik chegarasi, hech qachon mijoz bergan xona id'si emas).
 - **Instancelar bo'ylab fan-out** — **Redis pub/sub** (yoki boshqariladigan ekvivalent) orqali. Har qanday API/ishchi tugun `MessagePosted` hodisasini chiqaradi; o'sha xona obunachilarini saqlovchi har bir gateway instance uni yetkazadi.
 
 ### 5.2 Yetkazish kafolatlari va tartib
+
 - Xabarlar **avval saqlanadi** (Postgres), keyin tarqatiladi — DB haqiqat manbai, soket esa yetkazish tezlatkichi.
 - Har bir xabar **har bir sinf uchun monoton ketma-ketlik** (`seq`) raqamini olib yuradi, shu sababli mijozlar bo'shliqlarni aniqlab, REST orqali (`?after_seq=`) to'ldirishi mumkin. Bu Telegram darajasidagi ishonchlilikni beradi: soket uzilsa — qayta ulan, bo'shliqni sinxronla, hech qachon xabarni yo'qotma.
 - **Idempotentlik:** mijoz tomonidan generatsiya qilingan `client_msg_id` qayta urinishlarni takrorlanishdan saqlaydi va optimistik UI'ni quvvatlaydi (server qaytargan xabar optimistik xabar bilan mosланади).
 
 ### 5.3 Presence, yozmoqda, o'qilganlik
+
 - **Presence va yozmoqda:** vaqtinchalik, TTL bilan Redis'da, hech qachon Postgres'ga yozilmaydi (yuqori almashinuv, saqlash uchun kam qiymat).
 - **O'qilganlik / o'qilmaganlar hisoblagichi:** har bir a'zo uchun Postgres'da `last_read_seq` (+ Redis kesh). O'qilmagan = `class.max_seq − member.last_read_seq`. Arzon, aniq, masshtablanadi.
 
 ### 5.4 Push bildirishnomalar
+
 - Qabul qiluvchi oflayn bo'lsa, ishchi hodisani push'ga (Expo orqali APNs/FCM) yoki email/digest'ga aylantiradi — har bir foydalanuvchi bildirishnoma sozlamalari va jim soatlarini hisobga olib.
 
 ---
@@ -199,22 +213,23 @@ POST   /api/v1/ai/assist/*                   # o'qituvchiga yordam endpointlari
 Avtorizatsiya — **RBAC + qamrovli siyosat**, hech qachon tarqoq `if (role === 'teacher')` tekshiruvlari emas.
 
 - **Rollar** standart ruxsatlar to'plamini olib yuradi; **a'zoliklar** rolni tashkilot/sinfga moslaydi.
-- Markaziy **siyosat/guard qatlami** `can(actor, action, resource)` ga javob beradi: aktyorning roli, uning resurs sinf/tashkilotidagi a'zoligi va resurs-darajasidagi qoidalar (masalan, o'quvchi *o'z* xabarini tahrirlash oynasi ichida tahrirlay oladi).
-- **Ma'lumotlar qatlamida ta'minlash:** har bir sinfxona so'rovi repository darajasida a'zolik bo'yicha cheklanadi (ixtiyoriy ravishda mudofaa chuqurligi uchun Postgres Row-Level Security). Tugmani yashirgan UI *hech qachon* xavfsizlik chegarasi emas.
+- Markaziy **siyosat/guard qatlami** `can(actor, action, resource)` ga javob beradi: aktyorning roli, uning resurs sinf/tashkilotidagi a'zoligi va resurs-darajasidagi qoidalar (masalan, o'quvchi _o'z_ xabarini tahrirlash oynasi ichida tahrirlay oladi).
+- **Ma'lumotlar qatlamida ta'minlash:** har bir sinfxona so'rovi repository darajasida a'zolik bo'yicha cheklanadi (ixtiyoriy ravishda mudofaa chuqurligi uchun Postgres Row-Level Security). Tugmani yashirgan UI _hech qachon_ xavfsizlik chegarasi emas.
 
 Ruxsat misollari:
-| Harakat | Admin | O'qituvchi (egasi) | Ko-o'qituvchi | O'quvchi |
-|---|---|---|---|---|
-| O'qituvchi yaratish | ✓ | — | — | — |
-| Sinf yaratish | ✓ | ✓ | — | — |
-| O'quvchi yaratish | ✓ | ✓ | — | — |
-| Xabar yozish | ✓ (har) | ✓ (o'z sinfi) | ✓ | ✓ (o'z sinfi) |
-| O'z xabarini tahrirlash (≤ oyna) | ✓ | ✓ | ✓ | ✓ |
-| Boshqalar xabarini o'chirish | ✓ | ✓ | ✓ | — |
-| Qadash / E'lon | ✓ | ✓ | ✓ | — |
-| Vazifa/test yaratish | ✓ | ✓ | ✓ | — |
-| Baholash | ✓ | ✓ | ✓ | — |
-| Boshqa sinfxonani ko'rish | ✓ (auditланган) | — | — | — |
+
+| Harakat                          | Admin           | O'qituvchi (egasi) | Ko-o'qituvchi | O'quvchi      |
+| -------------------------------- | --------------- | ------------------ | ------------- | ------------- |
+| O'qituvchi yaratish              | ✓               | —                  | —             | —             |
+| Sinf yaratish                    | ✓               | ✓                  | —             | —             |
+| O'quvchi yaratish                | ✓               | ✓                  | —             | —             |
+| Xabar yozish                     | ✓ (har)         | ✓ (o'z sinfi)      | ✓             | ✓ (o'z sinfi) |
+| O'z xabarini tahrirlash (≤ oyna) | ✓               | ✓                  | ✓             | ✓             |
+| Boshqalar xabarini o'chirish     | ✓               | ✓                  | ✓             | —             |
+| Qadash / E'lon                   | ✓               | ✓                  | ✓             | —             |
+| Vazifa/test yaratish             | ✓               | ✓                  | ✓             | —             |
+| Baholash                         | ✓               | ✓                  | ✓             | —             |
+| Boshqa sinfxonani ko'rish        | ✓ (auditланган) | —                  | —             | —             |
 
 ---
 
@@ -241,12 +256,12 @@ Ruxsat misollari:
 
 ## 10. Keshlash
 
-| Qatlam | Texnologiya | Keshlanadi |
-|---|---|---|
-| Edge | CDN | statik aktivlar, media (imzolangan), ommaviy marketing |
-| Ilova | Redis | sessiya/refresh izlash, ruxsat tekshiruvlari, sinfxona bosh sahifasi, issiq xabar sahifalari, presence, o'qilmaganlar soni, rate-limit hisoblagichlari |
-| Mijoz | TanStack Query | aqlli invalidatsiya bilan server holati; realtime hodisalar keshni yangilaydi |
-| DB | Postgres | gradebook/analitika uchun materializatsiyalangan ko'rinishlar; issiq yo'llar uchun qisman indekslar |
+| Qatlam | Texnologiya    | Keshlanadi                                                                                                                                             |
+| ------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Edge   | CDN            | statik aktivlar, media (imzolangan), ommaviy marketing                                                                                                 |
+| Ilova  | Redis          | sessiya/refresh izlash, ruxsat tekshiruvlari, sinfxona bosh sahifasi, issiq xabar sahifalari, presence, o'qilmaganlar soni, rate-limit hisoblagichlari |
+| Mijoz  | TanStack Query | aqlli invalidatsiya bilan server holati; realtime hodisalar keshni yangilaydi                                                                          |
+| DB     | Postgres       | gradebook/analitika uchun materializatsiyalangan ko'rinishlar; issiq yo'llar uchun qisman indekslar                                                    |
 
 Kesh invalidatsiyasi **hodisa asosida** — domen hodisalari (`MessagePosted`, `MemberJoined` va h.k.) ko'r-ko'rona TTL taxminlari emas, balki maqsadli invalidatsiyalarni ishga tushiradi.
 

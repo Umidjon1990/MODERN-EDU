@@ -84,4 +84,5 @@ Ushbu qoidalar Modern Edu'ning **har bir** kelajakdagi o'zgarishini boshqaradi. 
 ---
 
 ### Hal qiluvchi mezon
+
 > Ikki yo'l mavjud bo'lsa va ishonchsiz bo'lsangiz — bir yildan keyin ham tajribali muhandis mamnuniyat bilan saqlaydigan yo'lni tanlang. **Saqlanuvchanlik, xavfsizlik va ravshanlik — shoshilinch yo'l o'rniga, har doim.**

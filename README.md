@@ -12,14 +12,14 @@ Har bir sinfxona xuddi maxfiy Telegram guruhi kabi ishlaydi, lekin ustiga vazifa
 
 Bu **arxitektura va dizayn bosqichi**. Hozircha hech qanday dastur kodi yozilmagan — bu ataylab shunday. Quyidagi hujjatlar tasdiqlanishi kutilayotgan blueprint (loyiha rejasi) bo'lib, har qanday amalga oshirish (implementatsiya) boshlanishidan oldin o'qilishi shart.
 
-| Hujjat | Maqsadi |
-|--------|---------|
-| [`docs/01-mahsulot-tavsifi.md`](docs/01-mahsulot-tavsifi.md) | Mahsulot ta'rifi, rollar, hisob hayotiy sikli va dastlabki shartga kiritilgan yaxshilanishlar |
-| [`docs/02-tizim-arxitekturasi.md`](docs/02-tizim-arxitekturasi.md) | To'liq texnik arxitektura: frontend, backend, realtime, autentifikatsiya, saqlash, xavfsizlik, masshtablanish, keshlash, monitoring, zaxira nusxalar, AI |
-| [`docs/03-malumotlar-bazasi.md`](docs/03-malumotlar-bazasi.md) | PostgreSQL sxemasi: har bir jadval, bog'lanish, kalit, indeks va masshtablash strategiyasi |
-| [`docs/04-ui-ux-dizayn.md`](docs/04-ui-ux-dizayn.md) | Dizayn tizimi, ekranma-ekran UX, chat tajribasi, animatsiya, qorong'i rejim, kirish imkoniyatlari |
-| [`docs/05-amalga-oshirish-rejasi.md`](docs/05-amalga-oshirish-rejasi.md) | Loyihaning kichik, bir-biriga bog'liq bosqichlarga bo'linishi (xavfsiz, bosqichma-bosqich qurish uchun) |
-| [`docs/06-ishlab-chiqish-qoidalari.md`](docs/06-ishlab-chiqish-qoidalari.md) | Har bir kelajakdagi o'zgarishni boshqaruvchi doimiy muhandislik qoidalari |
+| Hujjat                                                                       | Maqsadi                                                                                                                                                  |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`docs/01-mahsulot-tavsifi.md`](docs/01-mahsulot-tavsifi.md)                 | Mahsulot ta'rifi, rollar, hisob hayotiy sikli va dastlabki shartga kiritilgan yaxshilanishlar                                                            |
+| [`docs/02-tizim-arxitekturasi.md`](docs/02-tizim-arxitekturasi.md)           | To'liq texnik arxitektura: frontend, backend, realtime, autentifikatsiya, saqlash, xavfsizlik, masshtablanish, keshlash, monitoring, zaxira nusxalar, AI |
+| [`docs/03-malumotlar-bazasi.md`](docs/03-malumotlar-bazasi.md)               | PostgreSQL sxemasi: har bir jadval, bog'lanish, kalit, indeks va masshtablash strategiyasi                                                               |
+| [`docs/04-ui-ux-dizayn.md`](docs/04-ui-ux-dizayn.md)                         | Dizayn tizimi, ekranma-ekran UX, chat tajribasi, animatsiya, qorong'i rejim, kirish imkoniyatlari                                                        |
+| [`docs/05-amalga-oshirish-rejasi.md`](docs/05-amalga-oshirish-rejasi.md)     | Loyihaning kichik, bir-biriga bog'liq bosqichlarga bo'linishi (xavfsiz, bosqichma-bosqich qurish uchun)                                                  |
+| [`docs/06-ishlab-chiqish-qoidalari.md`](docs/06-ishlab-chiqish-qoidalari.md) | Har bir kelajakdagi o'zgarishni boshqaruvchi doimiy muhandislik qoidalari                                                                                |
 
 ## Asosiy texnologik qarorlar (2026)
 
