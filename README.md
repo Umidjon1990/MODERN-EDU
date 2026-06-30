@@ -67,4 +67,8 @@ Bu **arxitektura, dizayn va bosqichma-bosqich amalga oshirish** repozitoriyasi. 
 - **AI:** boshqariladigan **Claude** modellari provayder-abstraksiya qatlami ortida (o'z serveringda joylashtirish imkoniga tayyor) — repetitorlik, o'qituvchiga yordam va moderatsiya uchun.
 - **Infratuzilma:** Kubernetes'da konteynerlar, infrastruktura-kod sifatida (IaC), blue/green deploy.
 
-> **Holat:** Blueprint tasdiqlandi. Implementatsiya boshlandi — 0.1 (monorepo + CI) ✅ va ishlaydigan veb-ilova preview slice'i (kirish → sinfxona → chat) ✅. Keyingisi: haqiqiy backend (1–2-bosqichlar) va realtime (4-bosqich).
+> **Holat:** Barcha qurish bosqichlari (D1–D8) bajarildi ✅ — DB (Drizzle), auth
+> (JWT+Argon2id), sinflar/a'zolik/xabarlar, realtime (Socket.IO), media (S3),
+> akademik (vazifalar/baholash), bildirishnomalar va AI-repetitor (Claude).
+> Hammasi PGlite ustida testlangan (`pnpm verify` → 25/25 task, 30+ test) va
+> Railway'ga deploy uchun tayyor (`docs/07`). Mobil ilova (D10) keyingi bosqich.

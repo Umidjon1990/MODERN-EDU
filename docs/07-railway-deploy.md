@@ -83,6 +83,9 @@ S3_BUCKET            = modern-edu
 S3_ACCESS_KEY_ID     = <kalit>
 S3_SECRET_ACCESS_KEY = <sir>
 S3_FORCE_PATH_STYLE  = true     # R2/MinIO uchun
+# AI (ixtiyoriy — Claude). Bo'lmasa AI-repetitor o'chiq.
+ANTHROPIC_API_KEY    = <kalit>
+AI_MODEL             = claude-sonnet-4-6
 ```
 
 **realtime** servisi:

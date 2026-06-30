@@ -1,7 +1,8 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
 import {
   assignments,
+  classMembers,
   media,
   submissionAttachments,
   submissions,
@@ -21,6 +22,7 @@ import type {
 import { DRIZZLE } from '../db/db.module.js';
 import { AuditService } from '../common/audit.service.js';
 import { MembershipService } from '../classes/membership.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 
 function toSubmissionDto(s: Submission, studentName?: string): SubmissionDto {
   return {
@@ -56,6 +58,7 @@ export class AssignmentsService {
     @Inject(DRIZZLE) private readonly db: Database,
     private readonly membership: MembershipService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async create(
@@ -84,6 +87,23 @@ export class AssignmentsService {
       targetType: 'assignment',
       targetId: row!.id,
     });
+
+    // O'quvchilarga bildirishnoma
+    const students = await this.db
+      .select({ userId: classMembers.userId })
+      .from(classMembers)
+      .where(
+        and(
+          eq(classMembers.classId, classId),
+          eq(classMembers.roleInClass, 'student'),
+          isNull(classMembers.removedAt),
+        ),
+      );
+    await this.notifications.createMany(
+      students.map((s) => s.userId),
+      { orgId: actor.orgId, type: 'assignment', title: 'Yangi vazifa', body: dto.title, classId },
+    );
+
     return toAssignmentDto(row!);
   }
 
@@ -170,15 +190,13 @@ export class AssignmentsService {
     }
 
     if (dto.mediaIds && dto.mediaIds.length > 0) {
-      await this.db
-        .insert(submissionAttachments)
-        .values(
-          dto.mediaIds.map((mediaId, position) => ({
-            submissionId: submission.id,
-            mediaId,
-            position,
-          })),
-        );
+      await this.db.insert(submissionAttachments).values(
+        dto.mediaIds.map((mediaId, position) => ({
+          submissionId: submission.id,
+          mediaId,
+          position,
+        })),
+      );
     }
     return toSubmissionDto(submission);
   }
@@ -230,6 +248,16 @@ export class AssignmentsService {
       targetId: submissionId,
       context: { grade: dto.grade },
     });
+
+    await this.notifications.create({
+      userId: sub.studentId,
+      orgId: actor.orgId,
+      type: 'graded',
+      title: 'Ishingiz baholandi',
+      body: `${assignment.title}: ${dto.grade}/${assignment.pointsPossible}`,
+      classId: assignment.classId,
+    });
+
     return toSubmissionDto(updated!);
   }
 

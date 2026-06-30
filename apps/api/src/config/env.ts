@@ -20,6 +20,9 @@ const envSchema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((v) => v === 'true'),
+  // AI (Claude). Kalit bo'lmasa AI o'chiq.
+  ANTHROPIC_API_KEY: z.string().optional(),
+  AI_MODEL: z.string().default('claude-sonnet-4-6'),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

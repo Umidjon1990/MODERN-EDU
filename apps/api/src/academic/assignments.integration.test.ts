@@ -15,6 +15,7 @@ import { MembershipService } from '../classes/membership.service.js';
 import { ClassesService } from '../classes/classes.service.js';
 import { StudentsService } from '../classes/students.service.js';
 import type { AppEnv } from '../config/env.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { AssignmentsService } from './assignments.service.js';
 
 const require = createRequire(import.meta.url);
@@ -42,6 +43,7 @@ let tokens: TokenService;
 let classesSvc: ClassesService;
 let studentsSvc: StudentsService;
 let assignmentsSvc: AssignmentsService;
+let notifSvc: NotificationsService;
 
 async function loginClaims(u: string, p: string): Promise<AccessTokenClaims> {
   return tokens.verifyAccess((await auth.login(u, p)).accessToken);
@@ -59,7 +61,8 @@ beforeAll(async () => {
   auth = new AuthService(db, tokens, audit);
   classesSvc = new ClassesService(db, membership, audit);
   studentsSvc = new StudentsService(db, membership, audit);
-  assignmentsSvc = new AssignmentsService(db, membership, audit);
+  notifSvc = new NotificationsService(db);
+  assignmentsSvc = new AssignmentsService(db, membership, audit, notifSvc);
 });
 
 describe('D7 — vazifalar', () => {
@@ -104,6 +107,12 @@ describe('D7 — vazifalar', () => {
     // O'quvchi bahosini ko'radi
     const afterGrade = await assignmentsSvc.listForClass(student, klass.id);
     expect(afterGrade[0]!.mySubmission?.grade).toBe(45);
+
+    // Bildirishnomalar: vazifa + baholandi
+    const notifs = await notifSvc.list(student.sub);
+    expect(notifs.some((n) => n.type === 'assignment')).toBe(true);
+    expect(notifs.some((n) => n.type === 'graded')).toBe(true);
+    expect(await notifSvc.unreadCount(student.sub)).toBeGreaterThan(0);
   });
 
   it('o‘quvchi vazifa yarata olmaydi, baho ham qo‘ya olmaydi', async () => {

@@ -366,6 +366,54 @@ export const submissionAttachments = pgTable(
   (t) => [index('submission_attachments_idx').on(t.submissionId)],
 );
 
+// ---------- Bildirishnomalar ----------
+export const notificationType = pgEnum('notification_type', [
+  'message',
+  'announcement',
+  'assignment',
+  'graded',
+  'mention',
+  'system',
+]);
+
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id').notNull(),
+    type: notificationType('type').notNull(),
+    title: text('title').notNull(),
+    body: text('body'),
+    classId: uuid('class_id').references(() => classes.id, { onDelete: 'cascade' }),
+    payload: jsonb('payload').notNull().default({}),
+    readAt: ts('read_at'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('notifications_user_created_idx').on(t.userId, t.createdAt)],
+);
+
+// ---------- AI ----------
+export const aiMessages = pgTable(
+  'ai_messages',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    orgId: uuid('org_id').notNull(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+    classId: uuid('class_id').references(() => classes.id, { onDelete: 'set null' }),
+    kind: text('kind').notNull(), // 'tutor' | 'assist' | 'moderation'
+    question: text('question'),
+    answer: text('answer'),
+    model: text('model'),
+    tokensIn: integer('tokens_in'),
+    tokensOut: integer('tokens_out'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('ai_messages_org_idx').on(t.orgId, t.createdAt)],
+);
+
 // ---------- Audit ----------
 export const auditLog = pgTable(
   'audit_log',
@@ -398,3 +446,4 @@ export type Media = typeof media.$inferSelect;
 export type MessageAttachment = typeof messageAttachments.$inferSelect;
 export type Assignment = typeof assignments.$inferSelect;
 export type Submission = typeof submissions.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;

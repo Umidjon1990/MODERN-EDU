@@ -1,15 +1,22 @@
 // @modern-edu/sdk — tipli API mijozi.
 import type {
+  AssignmentDto,
   AuthResult,
   ClassMemberDto,
+  CreateAssignment,
   CreateClass,
   CreateMessage,
   CreateStudent,
+  GradeInput,
   MessageDto,
+  NotificationDto,
   PublicClass,
   PublicUser,
   RequestUpload,
   StudentCredential,
+  SubmissionDto,
+  SubmitWork,
+  TutorResponse,
   UploadTicket,
 } from '@modern-edu/contracts';
 
@@ -101,6 +108,32 @@ export class ApiClient {
       this.request<{ ok: true }>('DELETE', `/classes/${classId}/messages/${messageId}/pin`),
     markRead: (classId: string, seq: number) =>
       this.request<{ lastReadSeq: number }>('POST', `/classes/${classId}/read`, { seq }),
+  };
+
+  // ---- Academic ----
+  assignments = {
+    list: (classId: string) =>
+      this.request<AssignmentDto[]>('GET', `/classes/${classId}/assignments`),
+    create: (classId: string, dto: CreateAssignment) =>
+      this.request<AssignmentDto>('POST', `/classes/${classId}/assignments`, dto),
+    submit: (assignmentId: string, dto: SubmitWork) =>
+      this.request<SubmissionDto>('POST', `/assignments/${assignmentId}/submissions`, dto),
+    submissions: (assignmentId: string) =>
+      this.request<SubmissionDto[]>('GET', `/assignments/${assignmentId}/submissions`),
+    grade: (submissionId: string, dto: GradeInput) =>
+      this.request<SubmissionDto>('POST', `/submissions/${submissionId}/grade`, dto),
+  };
+
+  // ---- Notifications ----
+  notifications = {
+    list: () => this.request<{ items: NotificationDto[]; unread: number }>('GET', '/notifications'),
+    markAllRead: () => this.request<{ ok: true }>('POST', '/notifications/read-all'),
+  };
+
+  // ---- AI ----
+  ai = {
+    tutor: (classId: string, question: string) =>
+      this.request<TutorResponse>('POST', `/classes/${classId}/ai/tutor`, { question }),
   };
 
   // ---- Media ----
