@@ -20,9 +20,17 @@ export type ClientMessage = {
 
 const QUICK_EMOJI = ['👍', '❤️', '🔥', '🎉', '🙏', '😂'];
 
+export type LiveHandlers = {
+  onNew: (m: ClientMessage) => void;
+  onUpdate: (m: ClientMessage) => void;
+  onDelete: (messageId: string) => void;
+};
+
 export type ClassroomActions = {
   sendMessage: (body: string, replyToId?: string) => Promise<ClientMessage>;
   toggleReaction: (messageId: string, emoji: string) => Promise<ClientMessage>;
+  /** Jonli (realtime) hodisalarga obuna. Cleanup funksiyasini qaytaradi. */
+  subscribe?: (handlers: LiveHandlers) => () => void;
 };
 
 export function Classroom({
@@ -68,6 +76,26 @@ export function Classroom({
   useEffect(() => {
     scrollToBottom(false);
   }, []);
+
+  // Jonli (realtime) hodisalar — API rejimida
+  useEffect(() => {
+    if (!actions?.subscribe) return;
+    const unsub = actions.subscribe({
+      onNew: (m) => {
+        setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
+        requestAnimationFrame(() => scrollToBottom(true));
+      },
+      onUpdate: (m) => {
+        setMessages((prev) => prev.map((x) => (x.id === m.id ? m : x)));
+      },
+      onDelete: (id) => {
+        setMessages((prev) =>
+          prev.map((x) => (x.id === id ? { ...x, body: 'Bu xabar o‘chirildi', reactions: [] } : x)),
+        );
+      },
+    });
+    return unsub;
+  }, [actions]);
 
   useEffect(() => {
     const el = listRef.current;

@@ -6,6 +6,7 @@ import type { MessageDto } from '@modern-edu/contracts';
 import { getSession, clearSession } from '@/lib/client-session';
 import { findUserById, demoMessages, usersInClass, demoClass } from '@/lib/demo-data';
 import { apiEnabled, getApi, tokenStore, userStore } from '@/lib/api';
+import { createSocket, realtimeEnabled } from '@/lib/socket';
 import { BrandMark } from '@/components/brand';
 import {
   Classroom,
@@ -139,6 +140,23 @@ export default function ClassroomPage() {
           const updated = await api.messages.react(messageId, emoji);
           return mapMessage(updated);
         },
+        ...(realtimeEnabled
+          ? {
+              subscribe: (handlers) => {
+                const socket = createSocket(tokenStore.get() ?? '');
+                socket.on('message:new', (m) => {
+                  if (m.classId === klass.id) handlers.onNew(mapMessage(m));
+                });
+                socket.on('message:update', (m) => {
+                  if (m.classId === klass.id) handlers.onUpdate(mapMessage(m));
+                });
+                socket.on('message:delete', (p) => {
+                  if (p.classId === klass.id) handlers.onDelete(p.messageId);
+                });
+                return () => socket.disconnect();
+              },
+            }
+          : {}),
       };
 
       setState({

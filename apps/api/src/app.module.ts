@@ -6,9 +6,18 @@ import { AuthModule } from './auth/auth.module.js';
 import { UsersModule } from './users/users.module.js';
 import { ClassesModule } from './classes/classes.module.js';
 import { MessagesModule } from './messages/messages.module.js';
+import { RealtimeModule } from './realtime/realtime.publisher.js';
 
 @Module({
-  imports: [DbModule, AuditModule, AuthModule, UsersModule, ClassesModule, MessagesModule],
+  imports: [
+    DbModule,
+    AuditModule,
+    RealtimeModule,
+    AuthModule,
+    UsersModule,
+    ClassesModule,
+    MessagesModule,
+  ],
   controllers: [AppController],
 })
 export class AppModule {}

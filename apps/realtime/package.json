@@ -1,44 +1,33 @@
 {
-  "name": "@modern-edu/api",
+  "name": "@modern-edu/realtime",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Modern Edu API — NestJS (REST, auth, biznes mantiq)",
+  "description": "Modern Edu realtime gateway — Socket.IO + Redis fan-out",
   "main": "dist/main.js",
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint .",
-    "test": "vitest run"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@modern-edu/contracts": "workspace:*",
     "@modern-edu/db": "workspace:*",
-    "@nestjs/common": "^10.4.15",
-    "@nestjs/core": "^10.4.15",
-    "@nestjs/platform-express": "^10.4.15",
-    "@socket.io/redis-emitter": "^5.1.0",
-    "cookie-parser": "^1.4.7",
+    "@socket.io/redis-adapter": "^8.3.0",
     "drizzle-orm": "^0.38.3",
-    "express": "^4.21.2",
     "ioredis": "^5.4.2",
     "jsonwebtoken": "^9.0.2",
-    "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1",
+    "socket.io": "^4.8.1",
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.2.17",
     "@modern-edu/config": "workspace:*",
-    "@types/cookie-parser": "^1.4.8",
-    "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.10.2",
     "eslint": "^9.17.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "typescript": "^5.7.2"
   }
 }

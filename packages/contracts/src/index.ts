@@ -11,3 +11,4 @@ export * from './roles.js';
 export * from './auth.js';
 export * from './classes.js';
 export * from './messaging.js';
+export * from './realtime.js';

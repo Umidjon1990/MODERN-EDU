@@ -17,6 +17,7 @@ import { MembershipService } from './membership.service.js';
 import { ClassesService } from './classes.service.js';
 import { StudentsService } from './students.service.js';
 import { MessagesService } from '../messages/messages.service.js';
+import { RealtimePublisher } from '../realtime/realtime.publisher.js';
 
 const require = createRequire(import.meta.url);
 const migrationsFolder = path.join(
@@ -59,7 +60,8 @@ beforeAll(async () => {
   auth = new AuthService(db, tokens, audit);
   classesSvc = new ClassesService(db, membership, audit);
   studentsSvc = new StudentsService(db, membership, audit);
-  messagesSvc = new MessagesService(db, membership);
+  const realtime = new RealtimePublisher({} as AppEnv); // REDIS_URL yo'q → no-op
+  messagesSvc = new MessagesService(db, membership, realtime);
 });
 
 describe('D3 — sinflar, a’zolik, xabarlar', () => {

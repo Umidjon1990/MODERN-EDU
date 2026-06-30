@@ -16,6 +16,7 @@ import type {
 } from '@modern-edu/contracts';
 import { DRIZZLE } from '../db/db.module.js';
 import { MembershipService } from '../classes/membership.service.js';
+import { RealtimePublisher } from '../realtime/realtime.publisher.js';
 import { attachReactionsAndPins } from './message-query.js';
 
 @Injectable()
@@ -23,6 +24,7 @@ export class MessagesService {
   constructor(
     @Inject(DRIZZLE) private readonly db: Database,
     private readonly membership: MembershipService,
+    private readonly realtime: RealtimePublisher,
   ) {}
 
   async list(userId: string, classId: string, q: MessagesQuery): Promise<MessageDto[]> {
@@ -79,7 +81,9 @@ export class MessagesService {
       return msg!;
     });
 
-    return (await attachReactionsAndPins(this.db, classId, [created]))[0]!;
+    const result = (await attachReactionsAndPins(this.db, classId, [created]))[0]!;
+    this.realtime.emitNew(classId, result);
+    return result;
   }
 
   async edit(actor: AccessTokenClaims, messageId: string, body: string): Promise<MessageDto> {
@@ -95,7 +99,9 @@ export class MessagesService {
       .set({ body, editedAt: new Date() })
       .where(eq(messages.id, messageId))
       .returning();
-    return (await attachReactionsAndPins(this.db, msg.classId, [updated!]))[0]!;
+    const dto = (await attachReactionsAndPins(this.db, msg.classId, [updated!]))[0]!;
+    this.realtime.emitUpdate(msg.classId, dto);
+    return dto;
   }
 
   async remove(actor: AccessTokenClaims, messageId: string): Promise<{ ok: true }> {
@@ -107,6 +113,7 @@ export class MessagesService {
       throw new ForbiddenException('Bu xabarni o‘chirish huquqi yo‘q');
     }
     await this.db.update(messages).set({ deletedAt: new Date() }).where(eq(messages.id, messageId));
+    this.realtime.emitDelete(msg.classId, messageId);
     return { ok: true };
   }
 
@@ -135,7 +142,9 @@ export class MessagesService {
     } else {
       await this.db.insert(messageReactions).values({ messageId, userId: actor.sub, emoji });
     }
-    return (await attachReactionsAndPins(this.db, msg.classId, [msg]))[0]!;
+    const dto = (await attachReactionsAndPins(this.db, msg.classId, [msg]))[0]!;
+    this.realtime.emitUpdate(msg.classId, dto);
+    return dto;
   }
 
   async setPin(
