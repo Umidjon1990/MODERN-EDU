@@ -2,11 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import type { MessageDto } from '@modern-edu/contracts';
 import { getSession, clearSession } from '@/lib/client-session';
 import { findUserById, demoMessages, usersInClass, demoClass } from '@/lib/demo-data';
+import { apiEnabled, getApi, tokenStore, userStore } from '@/lib/api';
 import { BrandMark } from '@/components/brand';
 import {
   Classroom,
+  type ClassroomActions,
   type ClientMember,
   type ClientMessage,
   type ClientUser,
@@ -17,7 +20,24 @@ type Loaded = {
   klass: { name: string; subject: string };
   members: ClientMember[];
   initialMessages: ClientMessage[];
+  actions?: ClassroomActions;
 };
+
+const DEFAULT_COLOR = '#4f46e5';
+
+function mapMessage(m: MessageDto): ClientMessage {
+  return {
+    id: m.id,
+    seq: m.seq,
+    senderId: m.senderId ?? 'system',
+    type: m.type === 'announcement' ? 'announcement' : m.type === 'system' ? 'system' : 'text',
+    body: m.body ?? '',
+    createdAt: m.createdAt,
+    reactions: m.reactions,
+    replyToId: m.replyToId ?? undefined,
+    pinned: m.pinned,
+  };
+}
 
 export default function ClassroomPage() {
   const router = useRouter();
@@ -25,6 +45,15 @@ export default function ClassroomPage() {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
+    if (apiEnabled) {
+      void loadFromApi();
+    } else {
+      loadMock();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function loadMock() {
     const id = getSession();
     const user = id ? findUserById(id) : undefined;
     if (!user) {
@@ -32,8 +61,6 @@ export default function ClassroomPage() {
       setChecked(true);
       return;
     }
-
-    // A'zolik chegarasi: foydalanuvchi faqat o'z sinfining ma'lumotini ko'radi.
     const members: ClientMember[] = usersInClass(user.classId).map((u) => ({
       id: u.id,
       name: u.fullName,
@@ -41,7 +68,6 @@ export default function ClassroomPage() {
       role: u.role,
       online: u.id === user.id || u.id === 'usr_teacher' || u.id === 'usr_jasur',
     }));
-
     const initialMessages: ClientMessage[] = demoMessages.map((m) => ({
       id: m.id,
       seq: m.seq,
@@ -53,7 +79,6 @@ export default function ClassroomPage() {
       replyToId: m.replyToId,
       pinned: m.pinned ?? false,
     }));
-
     setState({
       currentUser: { id: user.id, name: user.fullName, color: user.avatarColor, role: user.role },
       klass: { name: demoClass.name, subject: demoClass.subject },
@@ -61,11 +86,90 @@ export default function ClassroomPage() {
       initialMessages,
     });
     setChecked(true);
-  }, [router]);
+  }
+
+  async function loadFromApi() {
+    if (!tokenStore.get()) {
+      router.replace('/login');
+      setChecked(true);
+      return;
+    }
+    try {
+      const api = getApi();
+      const me = userStore.get() ?? (await api.auth.me());
+      const classes = await api.classes.list();
+      const klass = classes[0];
+      if (!klass) {
+        // Hech qanday sinf yo'q — bo'sh holat
+        setState({
+          currentUser: {
+            id: me.id,
+            name: me.fullName,
+            color: me.avatarColor ?? DEFAULT_COLOR,
+            role: me.role,
+          },
+          klass: { name: 'Sinfingiz hali tayyor emas', subject: '' },
+          members: [],
+          initialMessages: [],
+        });
+        setChecked(true);
+        return;
+      }
+
+      const room = await api.classes.classroom(klass.id);
+      const members: ClientMember[] = room.members.map((m) => ({
+        id: m.userId,
+        name: m.fullName,
+        color: m.avatarColor ?? DEFAULT_COLOR,
+        role: m.roleInClass,
+        online: m.userId === me.id,
+      }));
+
+      const actions: ClassroomActions = {
+        sendMessage: async (body, replyToId) => {
+          const saved = await api.messages.post(klass.id, {
+            body,
+            type: 'text',
+            ...(replyToId ? { replyToId } : {}),
+            clientMsgId: crypto.randomUUID(),
+          });
+          return mapMessage(saved);
+        },
+        toggleReaction: async (messageId, emoji) => {
+          const updated = await api.messages.react(messageId, emoji);
+          return mapMessage(updated);
+        },
+      };
+
+      setState({
+        currentUser: {
+          id: me.id,
+          name: me.fullName,
+          color: me.avatarColor ?? DEFAULT_COLOR,
+          role: me.role,
+        },
+        klass: { name: room.class.name, subject: room.class.subject ?? '' },
+        members,
+        initialMessages: room.messages.map(mapMessage),
+        actions,
+      });
+      setChecked(true);
+    } catch {
+      router.replace('/login');
+      setChecked(true);
+    }
+  }
 
   const onLogout = useMemo(
     () => () => {
-      clearSession();
+      if (apiEnabled) {
+        void getApi()
+          .auth.logout()
+          .catch(() => undefined);
+        tokenStore.clear();
+      } else {
+        clearSession();
+      }
       router.replace('/login');
     },
     [router],
@@ -82,6 +186,7 @@ export default function ClassroomPage() {
       members={state.members}
       initialMessages={state.initialMessages}
       onLogout={onLogout}
+      {...(state.actions ? { actions: state.actions } : {})}
     />
   );
 }

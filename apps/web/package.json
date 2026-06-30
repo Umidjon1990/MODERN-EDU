@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@modern-edu/contracts": "workspace:*",
+    "@modern-edu/sdk": "workspace:*",
     "next": "^15.1.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

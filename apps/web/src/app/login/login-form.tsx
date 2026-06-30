@@ -4,14 +4,17 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { findUserByCredentials } from '@/lib/demo-data';
 import { setSession } from '@/lib/client-session';
+import { apiEnabled, getApi, userStore } from '@/lib/api';
 
 export function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (busy) return;
     setError(null);
     const form = new FormData(e.currentTarget);
     const username = String(form.get('username') ?? '');
@@ -21,6 +24,22 @@ export function LoginForm() {
       setError('Login va parolni kiriting.');
       return;
     }
+
+    if (apiEnabled) {
+      setBusy(true);
+      try {
+        const result = await getApi().auth.login(username, password);
+        userStore.set(result.user);
+        startTransition(() => router.push('/classroom'));
+      } catch {
+        setError('Login yoki parol noto‘g‘ri.');
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
+    // Demo (mock) rejim
     const user = findUserByCredentials(username, password);
     if (!user) {
       setError('Login yoki parol noto‘g‘ri.');
@@ -67,11 +86,11 @@ export function LoginForm() {
 
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || busy}
         className="ring-brand mt-1 inline-flex h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] font-semibold shadow-soft-md transition active:scale-[.99] disabled:opacity-70"
         style={{ background: 'var(--primary)', color: 'var(--primary-fg)' }}
       >
-        {pending ? (
+        {pending || busy ? (
           <>
             <Spinner /> Kirilmoqda…
           </>

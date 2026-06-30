@@ -20,18 +20,25 @@ export type ClientMessage = {
 
 const QUICK_EMOJI = ['👍', '❤️', '🔥', '🎉', '🙏', '😂'];
 
+export type ClassroomActions = {
+  sendMessage: (body: string, replyToId?: string) => Promise<ClientMessage>;
+  toggleReaction: (messageId: string, emoji: string) => Promise<ClientMessage>;
+};
+
 export function Classroom({
   currentUser,
   klass,
   members,
   initialMessages,
   onLogout,
+  actions,
 }: {
   currentUser: ClientUser;
   klass: { name: string; subject: string };
   members: ClientMember[];
   initialMessages: ClientMessage[];
   onLogout: () => void;
+  actions?: ClassroomActions;
 }) {
   const [messages, setMessages] = useState<ClientMessage[]>(initialMessages);
   const [replyTo, setReplyTo] = useState<ClientMessage | null>(null);
@@ -76,6 +83,40 @@ export function Classroom({
   function send() {
     const body = draft.trim();
     if (!body) return;
+    const replyToId = replyTo?.id;
+    setDraft('');
+    setReplyTo(null);
+
+    // API rejimi: optimistik qo'shib, server javobi bilan moslash
+    if (actions) {
+      const tempId = `temp_${Date.now()}`;
+      const seq = (messages.at(-1)?.seq ?? 0) + 1;
+      const optimistic: ClientMessage = {
+        id: tempId,
+        seq,
+        senderId: currentUser.id,
+        type: 'text',
+        body,
+        createdAt: new Date().toISOString(),
+        reactions: [],
+        replyToId,
+        pinned: false,
+      };
+      setMessages((prev) => [...prev, optimistic]);
+      requestAnimationFrame(() => scrollToBottom(true));
+      void actions
+        .sendMessage(body, replyToId)
+        .then((saved) => {
+          setMessages((prev) => prev.map((m) => (m.id === tempId ? saved : m)));
+        })
+        .catch(() => {
+          // Muvaffaqiyatsiz — optimistik xabarni olib tashlaymiz
+          setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        });
+      return;
+    }
+
+    // Demo (mock) rejim — lokal qo'shish + o'qituvchidan avto-javob
     const seq = (messages.at(-1)?.seq ?? 0) + 1;
     const msg: ClientMessage = {
       id: `local_${seq}_${Date.now()}`,
@@ -85,15 +126,12 @@ export function Classroom({
       body,
       createdAt: new Date().toISOString(),
       reactions: [],
-      replyToId: replyTo?.id,
+      replyToId,
       pinned: false,
     };
     setMessages((prev) => [...prev, msg]);
-    setDraft('');
-    setReplyTo(null);
     requestAnimationFrame(() => scrollToBottom(true));
 
-    // Preview uchun: o'qituvchidan avto-javob (realtime kanali 4.2-bosqichda keladi)
     if (currentUser.id !== 'usr_teacher') {
       setTeacherTyping(true);
       window.setTimeout(() => {
@@ -120,6 +158,17 @@ export function Classroom({
   }
 
   function toggleReaction(messageId: string, emoji: string) {
+    if (actions) {
+      void actions
+        .toggleReaction(messageId, emoji)
+        .then((updated) => {
+          setMessages((prev) => prev.map((m) => (m.id === messageId ? updated : m)));
+        })
+        .catch(() => {
+          /* e'tiborsiz */
+        });
+      return;
+    }
     setMessages((prev) =>
       prev.map((m) => {
         if (m.id !== messageId) return m;
