@@ -273,6 +273,99 @@ export const messageAttachments = pgTable(
   (t) => [index('message_attachments_message_idx').on(t.messageId)],
 );
 
+// ---------- Akademik (vazifalar) ----------
+export const assignmentStatus = pgEnum('assignment_status', ['draft', 'published', 'closed']);
+export const submissionStatus = pgEnum('submission_status', [
+  'draft',
+  'submitted',
+  'returned',
+  'resubmitted',
+]);
+
+export const assignments = pgTable(
+  'assignments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    classId: uuid('class_id')
+      .notNull()
+      .references(() => classes.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id').notNull(),
+    createdById: uuid('created_by')
+      .notNull()
+      .references(() => users.id),
+    title: text('title').notNull(),
+    instructions: text('instructions'),
+    dueAt: ts('due_at'),
+    pointsPossible: integer('points_possible').notNull().default(100),
+    status: assignmentStatus('status').notNull().default('draft'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    updatedAt: ts('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [index('assignments_class_status_idx').on(t.classId, t.status)],
+);
+
+export const assignmentAttachments = pgTable(
+  'assignment_attachments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    assignmentId: uuid('assignment_id')
+      .notNull()
+      .references(() => assignments.id, { onDelete: 'cascade' }),
+    mediaId: uuid('media_id')
+      .notNull()
+      .references(() => media.id, { onDelete: 'cascade' }),
+    position: integer('position').notNull().default(0),
+  },
+  (t) => [index('assignment_attachments_idx').on(t.assignmentId)],
+);
+
+export const submissions = pgTable(
+  'submissions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    assignmentId: uuid('assignment_id')
+      .notNull()
+      .references(() => assignments.id, { onDelete: 'cascade' }),
+    studentId: uuid('student_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    body: text('body'),
+    status: submissionStatus('status').notNull().default('submitted'),
+    submittedAt: ts('submitted_at'),
+    grade: integer('grade'),
+    feedback: text('feedback'),
+    gradedById: uuid('graded_by').references(() => users.id, { onDelete: 'set null' }),
+    gradedAt: ts('graded_at'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    updatedAt: ts('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    uniqueIndex('submissions_assignment_student_uq').on(t.assignmentId, t.studentId),
+    index('submissions_student_idx').on(t.studentId),
+  ],
+);
+
+export const submissionAttachments = pgTable(
+  'submission_attachments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    submissionId: uuid('submission_id')
+      .notNull()
+      .references(() => submissions.id, { onDelete: 'cascade' }),
+    mediaId: uuid('media_id')
+      .notNull()
+      .references(() => media.id, { onDelete: 'cascade' }),
+    position: integer('position').notNull().default(0),
+  },
+  (t) => [index('submission_attachments_idx').on(t.submissionId)],
+);
+
 // ---------- Audit ----------
 export const auditLog = pgTable(
   'audit_log',
@@ -303,3 +396,5 @@ export type Message = typeof messages.$inferSelect;
 export type NewMessage = typeof messages.$inferInsert;
 export type Media = typeof media.$inferSelect;
 export type MessageAttachment = typeof messageAttachments.$inferSelect;
+export type Assignment = typeof assignments.$inferSelect;
+export type Submission = typeof submissions.$inferSelect;

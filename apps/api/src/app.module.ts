@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module.js';
 import { ClassesModule } from './classes/classes.module.js';
 import { MessagesModule } from './messages/messages.module.js';
 import { MediaModule } from './media/media.module.js';
+import { AcademicModule } from './academic/academic.module.js';
 import { RealtimeModule } from './realtime/realtime.publisher.js';
 
 @Module({
@@ -19,6 +20,7 @@ import { RealtimeModule } from './realtime/realtime.publisher.js';
     ClassesModule,
     MessagesModule,
     MediaModule,
+    AcademicModule,
   ],
   controllers: [AppController],
 })
