@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
-import { seed, type Database } from '@modern-edu/db';
+import { media, seed, type Database } from '@modern-edu/db';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { AuditService } from '../common/audit.service.js';
 import { AuthService } from '../auth/auth.service.js';
@@ -42,6 +42,7 @@ let tokens: TokenService;
 let classesSvc: ClassesService;
 let studentsSvc: StudentsService;
 let messagesSvc: MessagesService;
+let db: Database;
 
 async function loginClaims(username: string, password: string): Promise<AccessTokenClaims> {
   const res = await auth.login(username, password);
@@ -50,7 +51,7 @@ async function loginClaims(username: string, password: string): Promise<AccessTo
 
 beforeAll(async () => {
   const pg = new PGlite();
-  const db = drizzle(pg) as unknown as Database;
+  db = drizzle(pg) as unknown as Database;
   await migrate(db as never, { migrationsFolder });
   await seed(db);
 
@@ -192,5 +193,32 @@ describe('D3 — sinflar, a’zolik, xabarlar', () => {
 
     const read = await messagesSvc.markRead(student, klass.id, msg.seq);
     expect(read.lastReadSeq).toBe(msg.seq);
+  });
+
+  it('media biriktirma: rasm xabari attachments va to‘g‘ri tur bilan keladi', async () => {
+    const teacher = await loginClaims('teacher', 'teacher123');
+    const klass = await classesSvc.createClass(teacher, { name: 'Media sinfi' });
+
+    const [m] = await db
+      .insert(media)
+      .values({
+        orgId: teacher.orgId,
+        ownerId: teacher.sub,
+        kind: 'image',
+        storageKey: `${teacher.orgId}/test.png`,
+        mimeType: 'image/png',
+        sizeBytes: 1234,
+        status: 'ready',
+      })
+      .returning();
+
+    const sent = await messagesSvc.post(teacher, klass.id, { type: 'text', mediaIds: [m!.id] });
+    expect(sent.type).toBe('image');
+    expect(sent.attachments).toHaveLength(1);
+    expect(sent.attachments[0]!.kind).toBe('image');
+    expect(sent.attachments[0]!.url).toContain(m!.id);
+
+    const history = await messagesSvc.list(teacher.sub, klass.id, { limit: 30 });
+    expect(history[0]!.attachments).toHaveLength(1);
   });
 });

@@ -1,14 +1,15 @@
 import type { messageReactions, messages } from '@modern-edu/db';
-import type { MessageDto } from '@modern-edu/contracts';
+import type { AttachmentDto, MessageDto } from '@modern-edu/contracts';
 
 type MessageRow = typeof messages.$inferSelect;
 type ReactionRow = typeof messageReactions.$inferSelect;
 
-/** Xabar qatorlarini reaksiya/pin bilan mijoz DTO'siga aylantiradi. */
+/** Xabar qatorlarini reaksiya/pin/biriktirma bilan mijoz DTO'siga aylantiradi. */
 export function toMessageDtos(
   rows: MessageRow[],
   reactions: ReactionRow[],
   pinnedIds: ReadonlySet<string>,
+  attachmentsByMessage: ReadonlyMap<string, AttachmentDto[]>,
 ): MessageDto[] {
   const byMessage = new Map<string, Map<string, string[]>>();
   for (const r of reactions) {
@@ -37,6 +38,7 @@ export function toMessageDtos(
       replyToId: m.replyToId,
       pinned: pinnedIds.has(m.id),
       reactions: reactionGroups,
+      attachments: m.deletedAt ? [] : (attachmentsByMessage.get(m.id) ?? []),
       editedAt: m.editedAt ? m.editedAt.toISOString() : null,
       deletedAt: m.deletedAt ? m.deletedAt.toISOString() : null,
       createdAt: m.createdAt.toISOString(),

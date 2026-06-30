@@ -2,6 +2,7 @@
 // docs/03-malumotlar-bazasi.md bilan mos. Keyingi bosqichlarda media, vazifa,
 // test, AI jadvallari qo'shiladi.
 import {
+  bigint,
   boolean,
   index,
   integer,
@@ -229,6 +230,49 @@ export const pinnedMessages = pgTable(
   ],
 );
 
+// ---------- Media ----------
+export const mediaKind = pgEnum('media_kind', ['image', 'video', 'audio', 'file', 'pdf']);
+export const mediaStatus = pgEnum('media_status', ['pending', 'scanning', 'ready', 'failed']);
+
+export const media = pgTable(
+  'media',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    orgId: uuid('org_id').notNull(),
+    ownerId: uuid('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'set null' }),
+    kind: mediaKind('kind').notNull(),
+    storageKey: text('storage_key').notNull(),
+    mimeType: text('mime_type'),
+    sizeBytes: bigint('size_bytes', { mode: 'number' }),
+    status: mediaStatus('status').notNull().default('pending'),
+    variants: jsonb('variants').notNull().default({}),
+    checksum: text('checksum'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    deletedAt: ts('deleted_at'),
+  },
+  (t) => [
+    index('media_org_owner_idx').on(t.orgId, t.ownerId),
+    index('media_status_idx').on(t.status),
+  ],
+);
+
+export const messageAttachments = pgTable(
+  'message_attachments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    messageId: uuid('message_id')
+      .notNull()
+      .references(() => messages.id, { onDelete: 'cascade' }),
+    mediaId: uuid('media_id')
+      .notNull()
+      .references(() => media.id, { onDelete: 'cascade' }),
+    position: integer('position').notNull().default(0),
+  },
+  (t) => [index('message_attachments_message_idx').on(t.messageId)],
+);
+
 // ---------- Audit ----------
 export const auditLog = pgTable(
   'audit_log',
@@ -257,3 +301,5 @@ export type Class = typeof classes.$inferSelect;
 export type ClassMember = typeof classMembers.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type NewMessage = typeof messages.$inferInsert;
+export type Media = typeof media.$inferSelect;
+export type MessageAttachment = typeof messageAttachments.$inferSelect;

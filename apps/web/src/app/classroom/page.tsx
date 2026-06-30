@@ -26,7 +26,7 @@ type Loaded = {
 
 const DEFAULT_COLOR = '#4f46e5';
 
-function mapMessage(m: MessageDto): ClientMessage {
+function mapMessage(m: MessageDto, toUrl: (rel: string) => string): ClientMessage {
   return {
     id: m.id,
     seq: m.seq,
@@ -37,7 +37,21 @@ function mapMessage(m: MessageDto): ClientMessage {
     reactions: m.reactions,
     replyToId: m.replyToId ?? undefined,
     pinned: m.pinned,
+    attachments: m.attachments.map((a) => ({
+      mediaId: a.mediaId,
+      kind: a.kind,
+      mimeType: a.mimeType,
+      sizeBytes: a.sizeBytes,
+      url: toUrl(a.url),
+    })),
   };
+}
+
+function pickKind(file: File): 'image' | 'pdf' | 'audio' | 'file' {
+  if (file.type.startsWith('image/')) return 'image';
+  if (file.type === 'application/pdf') return 'pdf';
+  if (file.type.startsWith('audio/')) return 'audio';
+  return 'file';
 }
 
 export default function ClassroomPage() {
@@ -126,6 +140,8 @@ export default function ClassroomPage() {
         online: m.userId === me.id,
       }));
 
+      const toUrl = (rel: string) => api.media.contentUrl(rel);
+
       const actions: ClassroomActions = {
         sendMessage: async (body, replyToId) => {
           const saved = await api.messages.post(klass.id, {
@@ -134,21 +150,30 @@ export default function ClassroomPage() {
             ...(replyToId ? { replyToId } : {}),
             clientMsgId: crypto.randomUUID(),
           });
-          return mapMessage(saved);
+          return mapMessage(saved, toUrl);
         },
         toggleReaction: async (messageId, emoji) => {
           const updated = await api.messages.react(messageId, emoji);
-          return mapMessage(updated);
+          return mapMessage(updated, toUrl);
+        },
+        uploadAndSend: async (file) => {
+          const mediaId = await api.media.upload(file, pickKind(file));
+          const saved = await api.messages.post(klass.id, {
+            type: 'text',
+            mediaIds: [mediaId],
+            clientMsgId: crypto.randomUUID(),
+          });
+          return mapMessage(saved, toUrl);
         },
         ...(realtimeEnabled
           ? {
               subscribe: (handlers) => {
                 const socket = createSocket(tokenStore.get() ?? '');
                 socket.on('message:new', (m) => {
-                  if (m.classId === klass.id) handlers.onNew(mapMessage(m));
+                  if (m.classId === klass.id) handlers.onNew(mapMessage(m, toUrl));
                 });
                 socket.on('message:update', (m) => {
-                  if (m.classId === klass.id) handlers.onUpdate(mapMessage(m));
+                  if (m.classId === klass.id) handlers.onUpdate(mapMessage(m, toUrl));
                 });
                 socket.on('message:delete', (p) => {
                   if (p.classId === klass.id) handlers.onDelete(p.messageId);
@@ -168,7 +193,7 @@ export default function ClassroomPage() {
         },
         klass: { name: room.class.name, subject: room.class.subject ?? '' },
         members,
-        initialMessages: room.messages.map(mapMessage),
+        initialMessages: room.messages.map((m) => mapMessage(m, toUrl)),
         actions,
       });
       setChecked(true);

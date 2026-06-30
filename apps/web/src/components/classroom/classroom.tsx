@@ -6,6 +6,14 @@ import { ThemeToggle } from '@/components/theme-toggle';
 
 export type ClientUser = { id: string; name: string; color: string; role: string };
 export type ClientMember = ClientUser & { online: boolean };
+export type ClientAttachment = {
+  mediaId: string;
+  kind: 'image' | 'video' | 'audio' | 'file' | 'pdf';
+  mimeType: string | null;
+  sizeBytes?: number | null;
+  url: string; // to'liq kontent URL (token bilan)
+};
+
 export type ClientMessage = {
   id: string;
   seq: number;
@@ -16,6 +24,7 @@ export type ClientMessage = {
   reactions: { emoji: string; userIds: string[] }[];
   replyToId?: string;
   pinned: boolean;
+  attachments?: ClientAttachment[];
 };
 
 const QUICK_EMOJI = ['👍', '❤️', '🔥', '🎉', '🙏', '😂'];
@@ -29,6 +38,8 @@ export type LiveHandlers = {
 export type ClassroomActions = {
   sendMessage: (body: string, replyToId?: string) => Promise<ClientMessage>;
   toggleReaction: (messageId: string, emoji: string) => Promise<ClientMessage>;
+  /** Rasm/fayl yuklab, xabar sifatida yuboradi. */
+  uploadAndSend?: (file: File) => Promise<ClientMessage>;
   /** Jonli (realtime) hodisalarga obuna. Cleanup funksiyasini qaytaradi. */
   subscribe?: (handlers: LiveHandlers) => () => void;
 };
@@ -340,6 +351,20 @@ export function Classroom({
           replyTo={replyTo}
           replyToName={replyTo ? (memberById.get(replyTo.senderId)?.name ?? '') : ''}
           onCancelReply={() => setReplyTo(null)}
+          onAttach={
+            actions?.uploadAndSend
+              ? (file) => {
+                  void actions.uploadAndSend!(file)
+                    .then((saved) => {
+                      setMessages((prev) =>
+                        prev.some((x) => x.id === saved.id) ? prev : [...prev, saved],
+                      );
+                      requestAnimationFrame(() => scrollToBottom(true));
+                    })
+                    .catch(() => undefined);
+                }
+              : undefined
+          }
         />
       </main>
 
@@ -593,7 +618,16 @@ function MessageBubble({
                 </span>
               </div>
             )}
-            <span className="whitespace-pre-wrap break-words">{message.body}</span>
+            {message.attachments && message.attachments.length > 0 && (
+              <div className="mb-1 grid gap-1.5">
+                {message.attachments.map((a) => (
+                  <Attachment key={a.mediaId} attachment={a} mine={mine} />
+                ))}
+              </div>
+            )}
+            {message.body && (
+              <span className="whitespace-pre-wrap break-words">{message.body}</span>
+            )}
             <span
               className="ml-2 inline-block translate-y-0.5 text-[10px]"
               style={{
@@ -685,6 +719,72 @@ function MessageBubble({
   );
 }
 
+function formatBytes(n?: number | null): string {
+  if (!n) return '';
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function Attachment({ attachment, mine }: { attachment: ClientAttachment; mine: boolean }) {
+  const a = attachment;
+  if (a.kind === 'image') {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <a href={a.url} target="_blank" rel="noopener noreferrer">
+        <img
+          src={a.url}
+          alt="rasm"
+          className="max-h-72 w-auto max-w-full rounded-[var(--radius-md)] object-cover"
+          loading="lazy"
+        />
+      </a>
+    );
+  }
+  if (a.kind === 'audio') {
+    return <audio controls src={a.url} className="w-56 max-w-full" />;
+  }
+  // pdf / file
+  return (
+    <a
+      href={a.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 rounded-[var(--radius-md)] px-2.5 py-2 text-sm"
+      style={{
+        background: mine ? 'rgba(255,255,255,.14)' : 'var(--surface-2)',
+        color: 'inherit',
+      }}
+    >
+      <FileIcon />
+      <span className="min-w-0">
+        <span className="block truncate font-medium">
+          {a.kind === 'pdf' ? 'PDF hujjat' : 'Fayl'}
+        </span>
+        <span className="text-xs opacity-70">{formatBytes(a.sizeBytes)}</span>
+      </span>
+    </a>
+  );
+}
+
+function FileIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6" />
+    </svg>
+  );
+}
+
 function TypingRow({ name, color }: { name: string; color: string }) {
   return (
     <div className="mt-3 flex animate-fade-rise items-end gap-2.5">
@@ -716,6 +816,7 @@ function Composer({
   replyTo,
   replyToName,
   onCancelReply,
+  onAttach,
 }: {
   draft: string;
   setDraft: (v: string) => void;
@@ -723,8 +824,10 @@ function Composer({
   replyTo: ClientMessage | null;
   replyToName: string;
   onCancelReply: () => void;
+  onAttach?: (file: File) => void;
 }) {
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const ta = taRef.current;
@@ -758,9 +861,27 @@ function Composer({
           className="flex items-end gap-2 rounded-[var(--radius-xl)] border p-1.5 shadow-soft"
           style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
         >
-          <IconButton label="Biriktirish">
+          <button
+            type="button"
+            aria-label="Biriktirish"
+            title="Rasm/fayl biriktirish"
+            disabled={!onAttach}
+            onClick={() => fileRef.current?.click()}
+            className="ring-brand grid h-9 w-9 shrink-0 place-items-center rounded-[var(--radius-md)] text-muted transition hover:text-[var(--text)] disabled:opacity-40"
+          >
             <AttachIcon />
-          </IconButton>
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*,application/pdf,audio/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file && onAttach) onAttach(file);
+              e.target.value = '';
+            }}
+          />
           <textarea
             ref={taRef}
             value={draft}

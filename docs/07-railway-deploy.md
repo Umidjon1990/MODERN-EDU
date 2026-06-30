@@ -76,6 +76,13 @@ JWT_REFRESH_SECRET  = <tasodifiy 32+ bayt>
 CORS_ORIGIN  = https://<web-domain>.up.railway.app
 NODE_ENV     = production
 PORT         = 8080            # Railway PORT'ni avtomatik beradi
+# Media (ixtiyoriy — S3-mos: AWS S3 / Cloudflare R2 / MinIO). Bo'lmasa fayl o'chiq.
+S3_ENDPOINT          = https://<account>.r2.cloudflarestorage.com
+S3_REGION            = auto
+S3_BUCKET            = modern-edu
+S3_ACCESS_KEY_ID     = <kalit>
+S3_SECRET_ACCESS_KEY = <sir>
+S3_FORCE_PATH_STYLE  = true     # R2/MinIO uchun
 ```
 
 **realtime** servisi:

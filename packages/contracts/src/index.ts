@@ -10,5 +10,6 @@ export * from './common.js';
 export * from './roles.js';
 export * from './auth.js';
 export * from './classes.js';
+export * from './media.js';
 export * from './messaging.js';
 export * from './realtime.js';

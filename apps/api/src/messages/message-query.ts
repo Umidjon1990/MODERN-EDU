@@ -1,11 +1,23 @@
 import { and, eq, inArray } from 'drizzle-orm';
-import { messageReactions, messages, pinnedMessages, type Database } from '@modern-edu/db';
-import type { MessageDto } from '@modern-edu/contracts';
+import {
+  media,
+  messageAttachments,
+  messageReactions,
+  messages,
+  pinnedMessages,
+  type Database,
+} from '@modern-edu/db';
+import type { AttachmentDto, MessageDto } from '@modern-edu/contracts';
 import { toMessageDtos } from './message.mapper.js';
 
 type MessageRow = typeof messages.$inferSelect;
 
-/** Xabar qatorlariga reaksiya va pin holatini biriktirib DTO qaytaradi. */
+/** Media kontent endpointi (mijoz token bilan chaqiradi). */
+export function mediaContentPath(mediaId: string): string {
+  return `/api/v1/media/${mediaId}/content`;
+}
+
+/** Xabar qatorlariga reaksiya, pin va biriktirmalarni biriktirib DTO qaytaradi. */
 export async function attachReactionsAndPins(
   db: Database,
   classId: string,
@@ -25,5 +37,31 @@ export async function attachReactionsAndPins(
     .where(and(eq(pinnedMessages.classId, classId), inArray(pinnedMessages.messageId, ids)));
   const pinnedSet = new Set(pins.map((p) => p.messageId));
 
-  return toMessageDtos(rows, reactions, pinnedSet);
+  const attachmentRows = await db
+    .select({
+      messageId: messageAttachments.messageId,
+      position: messageAttachments.position,
+      mediaId: media.id,
+      kind: media.kind,
+      mimeType: media.mimeType,
+      sizeBytes: media.sizeBytes,
+    })
+    .from(messageAttachments)
+    .innerJoin(media, eq(messageAttachments.mediaId, media.id))
+    .where(inArray(messageAttachments.messageId, ids));
+
+  const attachmentsByMessage = new Map<string, AttachmentDto[]>();
+  for (const a of attachmentRows) {
+    const list = attachmentsByMessage.get(a.messageId) ?? [];
+    list.push({
+      mediaId: a.mediaId,
+      kind: a.kind,
+      mimeType: a.mimeType,
+      sizeBytes: a.sizeBytes,
+      url: mediaContentPath(a.mediaId),
+    });
+    attachmentsByMessage.set(a.messageId, list);
+  }
+
+  return toMessageDtos(rows, reactions, pinnedSet, attachmentsByMessage);
 }

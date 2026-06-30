@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { attachmentDtoSchema } from './media.js';
 
 export const messageTypeSchema = z.enum([
   'text',
@@ -13,13 +14,18 @@ export const messageTypeSchema = z.enum([
 ]);
 export type MessageTypeDto = z.infer<typeof messageTypeSchema>;
 
-/** Xabar yuborish. */
-export const createMessageSchema = z.object({
-  body: z.string().min(1).max(4000),
-  type: messageTypeSchema.default('text'),
-  replyToId: z.string().uuid().optional(),
-  clientMsgId: z.string().uuid().optional(), // idempotentlik / optimistik UI
-});
+/** Xabar yuborish. Matn yoki media (yoki ikkalasi) bo'lishi mumkin. */
+export const createMessageSchema = z
+  .object({
+    body: z.string().max(4000).optional(),
+    type: messageTypeSchema.default('text'),
+    replyToId: z.string().uuid().optional(),
+    clientMsgId: z.string().uuid().optional(), // idempotentlik / optimistik UI
+    mediaIds: z.array(z.string().uuid()).max(10).optional(),
+  })
+  .refine((d) => (d.body && d.body.trim().length > 0) || (d.mediaIds && d.mediaIds.length > 0), {
+    message: 'Xabar matni yoki fayl bo‘lishi kerak',
+  });
 export type CreateMessage = z.infer<typeof createMessageSchema>;
 
 export const editMessageSchema = z.object({
@@ -61,6 +67,7 @@ export const messageDtoSchema = z.object({
   replyToId: z.string().uuid().nullable(),
   pinned: z.boolean(),
   reactions: z.array(reactionGroupSchema),
+  attachments: z.array(attachmentDtoSchema),
   editedAt: z.string().nullable(),
   deletedAt: z.string().nullable(),
   createdAt: z.string(),

@@ -8,7 +8,9 @@ import type {
   MessageDto,
   PublicClass,
   PublicUser,
+  RequestUpload,
   StudentCredential,
+  UploadTicket,
 } from '@modern-edu/contracts';
 
 export type ClassroomPayload = {
@@ -99,6 +101,36 @@ export class ApiClient {
       this.request<{ ok: true }>('DELETE', `/classes/${classId}/messages/${messageId}/pin`),
     markRead: (classId: string, seq: number) =>
       this.request<{ lastReadSeq: number }>('POST', `/classes/${classId}/read`, { seq }),
+  };
+
+  // ---- Media ----
+  media = {
+    requestUpload: (dto: RequestUpload) =>
+      this.request<UploadTicket>('POST', '/media/upload-url', dto),
+    finalize: (mediaId: string) =>
+      this.request<{ id: string; status: string }>('POST', `/media/${mediaId}/finalize`),
+    /** Kontent uchun to'liq URL (token bilan — <img>/<a> uchun). */
+    contentUrl: (relativeUrl: string): string => {
+      const token = this.opts.getAccessToken?.() ?? '';
+      return `${this.baseUrl}${relativeUrl}?token=${encodeURIComponent(token)}`;
+    },
+    /** Faylni to'liq yuklash: ticket → PUT → finalize. mediaId qaytaradi. */
+    upload: async (file: File, kind: RequestUpload['kind']): Promise<string> => {
+      const ticket = await this.media.requestUpload({
+        kind,
+        mimeType: file.type || 'application/octet-stream',
+        sizeBytes: file.size,
+        fileName: file.name,
+      });
+      const put = await fetch(ticket.uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type || 'application/octet-stream' },
+        body: file,
+      });
+      if (!put.ok) throw new ApiError(put.status, 'Fayl yuklab bo‘lmadi');
+      await this.media.finalize(ticket.mediaId);
+      return ticket.mediaId;
+    },
   };
 
   private async request<T>(

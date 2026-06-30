@@ -1,13 +1,16 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { and, desc, eq, gt, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, inArray, lt, sql } from 'drizzle-orm';
 import {
   classMembers,
   classes,
+  media,
+  messageAttachments,
   messageReactions,
   messages,
   pinnedMessages,
   type Database,
 } from '@modern-edu/db';
+import type { MediaKind, MessageTypeDto } from '@modern-edu/contracts';
 import type {
   AccessTokenClaims,
   CreateMessage,
@@ -18,6 +21,14 @@ import { DRIZZLE } from '../db/db.module.js';
 import { MembershipService } from '../classes/membership.service.js';
 import { RealtimePublisher } from '../realtime/realtime.publisher.js';
 import { attachReactionsAndPins } from './message-query.js';
+
+const MEDIA_TO_MESSAGE_TYPE: Record<MediaKind, MessageTypeDto> = {
+  image: 'image',
+  pdf: 'pdf',
+  audio: 'voice',
+  video: 'file',
+  file: 'file',
+};
 
 @Injectable()
 export class MessagesService {
@@ -58,6 +69,20 @@ export class MessagesService {
       if (existing) return (await attachReactionsAndPins(this.db, classId, [existing]))[0]!;
     }
 
+    // Biriktirmalarni tekshirish (faqat o'z tashkilotidagi media) va turni aniqlash
+    const mediaIds = dto.mediaIds ?? [];
+    let resolvedType = dto.type;
+    if (mediaIds.length > 0) {
+      const mediaRows = await this.db
+        .select({ id: media.id, kind: media.kind })
+        .from(media)
+        .where(and(inArray(media.id, mediaIds), eq(media.orgId, actor.orgId)));
+      if (mediaRows.length !== mediaIds.length) {
+        throw new NotFoundException('Biriktirma topilmadi');
+      }
+      resolvedType = MEDIA_TO_MESSAGE_TYPE[mediaRows[0]!.kind];
+    }
+
     const created = await this.db.transaction(async (tx) => {
       const [cls] = await tx
         .update(classes)
@@ -72,12 +97,18 @@ export class MessagesService {
           orgId: actor.orgId,
           seq: cls!.seq,
           senderId: actor.sub,
-          type: dto.type,
-          body: dto.body,
+          type: resolvedType,
+          body: dto.body ?? null,
           replyToId: dto.replyToId ?? null,
           clientMsgId: dto.clientMsgId ?? null,
         })
         .returning();
+
+      if (mediaIds.length > 0) {
+        await tx
+          .insert(messageAttachments)
+          .values(mediaIds.map((mediaId, position) => ({ messageId: msg!.id, mediaId, position })));
+      }
       return msg!;
     });
 
