@@ -54,7 +54,7 @@ Railway'da har bir komponent alohida **servis** sifatida joylashtiriladi va ular
 
 ## 2. Texnologik qarorlar (deploy uchun)
 
-- **ORM: Prisma.** Migratsiyalar, tip-xavfsiz so'rovlar, Railway Postgres bilan a'lo ishlaydi. Sxema `docs/03-malumotlar-bazasi.md` ni aks ettiradi. `packages/db` paketida joylashadi.
+- **ORM: Drizzle.** Sof TypeScript (engine yuklab olmaydi), tip-xavfsiz so'rovlar, drizzle-kit migratsiyalari, Railway Postgres bilan a'lo ishlaydi. Sxema `docs/03-malumotlar-bazasi.md` ni aks ettiradi. `packages/db` paketida joylashadi. (PGlite bilan lokal/CI'da haqiqiy testlanadi.)
 - **Web rejimi:** Railway'da Next.js **server rejimida** (`next start`) ishlaydi — statik eksport emas. `output: 'export'` faqat `GITHUB_PAGES=true` bo'lganda yoqiladi, shuning uchun Pages preview ham, Railway server rejimi ham ishlaydi.
 - **Build: har bir servis uchun Dockerfile.** pnpm workspace'ni to'g'ri qurish uchun ko'p bosqichli (multi-stage) Dockerfile eng ishonchli. Railway Dockerfile'ni avtomatik aniqlaydi.
 - **Migratsiyalar:** `api` servisi ishga tushishidan oldin `prisma migrate deploy` bajaradi (release bosqichi).
@@ -73,7 +73,6 @@ DATABASE_URL = ${{Postgres.DATABASE_URL}}
 REDIS_URL    = ${{Redis.REDIS_URL}}
 JWT_ACCESS_SECRET   = <tasodifiy 32+ bayt>
 JWT_REFRESH_SECRET  = <tasodifiy 32+ bayt>
-ARGON_PEPPER        = <tasodifiy sir>
 CORS_ORIGIN  = https://<web-domain>.up.railway.app
 NODE_ENV     = production
 PORT         = 8080            # Railway PORT'ni avtomatik beradi
@@ -110,7 +109,7 @@ PORT     = 3000
 4. **api servisi:** _+ New_ → _GitHub Repo_ → root sifatida `apps/api` (yoki Dockerfile yo'lini ko'rsating). Variables (yuqoridagi) ni qo'shing. Public domain yoqing (_Settings → Networking → Generate Domain_).
 5. **realtime servisi:** xuddi shunday, `apps/realtime`. Public domain yoqing.
 6. **web servisi:** `apps/web`. `NEXT_PUBLIC_*` o'zgaruvchilarini (api va realtime domainlari bilan) qo'shing. Public domain yoqing.
-7. **Migratsiyalar:** api servisi birinchi deploy'da avtomatik `prisma migrate deploy` + seed (ixtiyoriy) bajaradi.
+7. **Migratsiyalar:** api servisi release buyrug'ida `pnpm --filter @modern-edu/db db:migrate` (Drizzle migratsiyalari) + ixtiyoriy `db:seed` bajaradi.
 8. **Tekshirish:** web domain'ni oching → admin/o'qituvchi bilan kiring → sinfxona va chat ishlashini tekshiring.
 
 Har bir GitHub push avtomatik qayta deploy qiladi (CI/CD).
